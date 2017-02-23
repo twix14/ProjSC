@@ -1,5 +1,5 @@
 
-public class MyGitServer {
+public class myGitServer {
 	public static void main(String args){
 		
 	}
