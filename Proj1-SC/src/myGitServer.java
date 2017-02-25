@@ -1,5 +1,8 @@
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -14,7 +17,7 @@ public class myGitServer {
 	}
 
 	public void startServer (int socket){
-		File utilizadores = new File("utilizadores.txt");
+		
 		ServerSocket sSoc = null;
 
 		try {
@@ -39,7 +42,7 @@ public class myGitServer {
 	}
 	//Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
-
+		
 		private Socket socket = null;
 
 		ServerThread(Socket inSoc) {
@@ -48,6 +51,18 @@ public class myGitServer {
 		}
 
 		public void run(){
+			File utilizadores;
+			
+			try {
+				BufferedReader reader = new BufferedReader(new FileReader("utilizadores.txt"));
+			} catch (FileNotFoundException e1) {
+				utilizadores = new File("utilizadores.txt");
+				try {
+					BufferedReader reader = new BufferedReader(new FileReader("utilizadores.txt"));
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+			}
 			try {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
@@ -62,19 +77,9 @@ public class myGitServer {
 				}catch (ClassNotFoundException e1) {
 					e1.printStackTrace();
 				}
-
-				//TODO: refazer
-				//este codigo apenas exemplifica a comunicacao entre o cliente e o servidor
-				//nao faz qualquer tipo de autenticacao
-				if (user.length() != 0){
-					outStream.writeObject(new Boolean(true));
-				}
-				else {
-					outStream.writeObject(new Boolean(false));
-				}
-				length = (int) inStream.readObject();
-				System.out.println(length);
-
+				
+				
+				
 				
 				outStream.close();
 				inStream.close();
@@ -82,8 +87,6 @@ public class myGitServer {
 				socket.close();
 
 			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			}
 		}
