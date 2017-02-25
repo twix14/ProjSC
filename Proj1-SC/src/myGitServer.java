@@ -1,8 +1,9 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -17,7 +18,7 @@ public class myGitServer {
 	}
 
 	public void startServer (int socket){
-		
+
 		ServerSocket sSoc = null;
 
 		try {
@@ -42,7 +43,7 @@ public class myGitServer {
 	}
 	//Threads utilizadas para comunicacao com os clientes
 	class ServerThread extends Thread {
-		
+
 		private Socket socket = null;
 
 		ServerThread(Socket inSoc) {
@@ -51,25 +52,13 @@ public class myGitServer {
 		}
 
 		public void run(){
-			File utilizadores;
 			
-			try {
-				BufferedReader reader = new BufferedReader(new FileReader("utilizadores.txt"));
-			} catch (FileNotFoundException e1) {
-				utilizadores = new File("utilizadores.txt");
-				try {
-					BufferedReader reader = new BufferedReader(new FileReader("utilizadores.txt"));
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				}
-			}
 			try {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
 				String user = null;
-				String passwd;
-				int length = 0;
+				String passwd = null;
 				try {
 					user = (String)inStream.readObject();
 					passwd = (String)inStream.readObject();
@@ -78,9 +67,9 @@ public class myGitServer {
 					e1.printStackTrace();
 				}
 				
+				Boolean ee = verificaUtilizador(user, passwd);
 				
-				
-				
+					
 				outStream.close();
 				inStream.close();
 
@@ -89,6 +78,36 @@ public class myGitServer {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		}
+
+		private Boolean verificaUtilizador(String user, String passwd) throws IOException {
+			BufferedReader reader = null;
+			try {
+				reader = new BufferedReader(new FileReader("utilizadores.txt"));
+			} catch (FileNotFoundException e1) {
+				try {
+					File utilizadores = new File ("utilizadores.txt");
+					reader = new BufferedReader(new FileReader("utilizadores.txt"));
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+			}
+			String line;
+			while((line = reader.readLine()) != null){
+				String[] curr = line.split(" ");
+				if(user.equals(curr[1])){
+					if(passwd.equals(curr[2]))
+						return true;
+					else{
+						System.out.println("Palavra passe incorreta");
+						return false;
+					}	
+				}	
+			}
+			
+			BufferedWriter writer = new BufferedWriter(new FileWriter("utilizadores.txt")); 
+			writer.write(user + " " + passwd);
+			return true;
 		}
 
 
