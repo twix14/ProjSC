@@ -67,7 +67,11 @@ public class myGitServer {
 					e1.printStackTrace();
 				}
 				
-				Boolean ee = verificaUtilizador(user, passwd);
+				if(verificaUtilizador(user, passwd))
+					System.out.println("correto");
+				else{
+					System.out.println("tente de novo");
+				}
 				
 					
 				outStream.close();
@@ -82,15 +86,12 @@ public class myGitServer {
 
 		private Boolean verificaUtilizador(String user, String passwd) throws IOException {
 			BufferedReader reader = null;
+			File utilizadores = new File ("utilizadores.txt");
+			utilizadores.createNewFile();
 			try {
 				reader = new BufferedReader(new FileReader("utilizadores.txt"));
-			} catch (FileNotFoundException e1) {
-				try {
-					File utilizadores = new File ("utilizadores.txt");
-					reader = new BufferedReader(new FileReader("utilizadores.txt"));
-				} catch (FileNotFoundException e) {
+			} catch (FileNotFoundException e) {
 					e.printStackTrace();
-				}
 			}
 			String line;
 			while((line = reader.readLine()) != null){
@@ -104,9 +105,11 @@ public class myGitServer {
 					}	
 				}	
 			}
-			
 			BufferedWriter writer = new BufferedWriter(new FileWriter("utilizadores.txt")); 
 			writer.write(user + " " + passwd);
+			
+			reader.close();
+			writer.close();
 			return true;
 		}
 
