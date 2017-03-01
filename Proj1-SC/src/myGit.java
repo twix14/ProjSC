@@ -3,9 +3,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map.Entry;
 import java.util.Scanner;
 
 public class myGit {
@@ -18,120 +15,81 @@ public class myGit {
 	private void connectToServer(String[] args) {
 		Socket socket = null;
 		
-		/**
-		 * Codigos createuser - 0
-		 */
+		if(args[0].equals("-init")){
+			if(makeRepositoryLocal(args[1]))
+				System.out.print("-- O repositório myrep foi criado localmente");
+		} else {
 		
-		try {
-			String[] temp = args[1].split(":");
-			socket = new Socket(temp[0], 
-					Integer.parseInt(temp[1]));
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-			System.exit(-1);
-		}
-		
-		try{
-			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-			
-			if(args[0].equals("-init"))
-				if(makeRepositoryLocal(args[1]))
-					System.out.print("-- O repositório myrep foi criado localmente");
-			else if(args.length == 3){ //Cria um novo utilizador
-				user(args, out, in);	
-			}else {
-				switch (args[3]) {
-					case "-push": break;
-					
-					case "-pull": break;
-					
-					case "-share": break;
-					
-					case "-remove": break;
-				}
+			try {
+				String[] temp = args[1].split(":");
+				socket = new Socket(temp[0], 
+						Integer.parseInt(temp[1]));
+			} catch (IOException e) {
+				System.err.println(e.getMessage());
+				System.exit(-1);
 			}
 			
-			out.close();
-			in.close();
-			socket.close();
-			
-		} catch (IOException e) {
-			e.printStackTrace();
+			try{
+				ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+				ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
+					
+				if(args.length == 3){ //Cria um novo utilizador
+					
+					System.out.println("-- O utilizador " + args[0] + " vai ser criado");
+					if(user(args, out, in) == 1)
+						System.out.println("-- O utilizador " + args[0] + " foi criado");
+					else
+						System.out.println("-- A password nao corresponde ao utilizador");
+					
+				} else {
+					
+					switch (args[4]) {
+						case "-push": break;
+						
+						case "-pull": break;
+						
+						case "-share": break;
+						
+						case "-remove": break;
+					}
+				}
+				
+				out.close();
+				in.close();
+				socket.close();
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
-		
 	}	
 	
-	private void user(String[] args, ObjectOutputStream out, ObjectInputStream in) throws IOException {
-		//ir buscar lista de utilizadores primeiro, value - utilizador, key - password
-		List<Entry<String, String>> users = getUsers(out, in);
-		
-		//ve se o utilizador ja existe no caso de ser
-		for(Entry<String,String> e : users){
-			if(e.getValue().equals(args[0]))
-				return;
-		}
-		
-		System.out.println("O utilizador " + args[0] + " vai ser criado");
-		
+	private int user(String[] args, ObjectOutputStream out, ObjectInputStream in) throws IOException {
 		String pwd = "";
 		Scanner keyboard = null;
 		
-		while(!args[2].equals(pwd)){
+		while(!args[3].equals(pwd)){
 			keyboard = new Scanner(System.in);
-			System.out.println("Confirmar password do utilizador " + args[3]);
+			System.out.println("Confirmar password do utilizador " + args[0]);
 			pwd = keyboard.nextLine();
-			if(!pwd.equals(args[2]))
+			if(!pwd.equals(args[3]))
 				System.out.println("As passwords nao correspondem");
 		}
 		
 		keyboard.close();
 		
-		createUser(args[3], pwd, out, in);
-		System.out.println("O utilizador " + args[0] + " foi criado");
-	}
-
-	private List<Entry<String, String>> getUsers(ObjectOutputStream out, ObjectInputStream in) throws IOException {
-		List<Entry<String, String>> result = new ArrayList<Entry<String, String>>();
-		//rever implementacao para ser feita map?
+		out.writeObject((String) args[0]);
+		out.writeObject((String) args[3]);
 		
-		//diz que quer a lista de utilizadores
-		out.writeInt(1);
+		int result = 0;
 		
-		while(true){
-			//envia 1 se ainda tem utilizadores e 0 se ja nao tem
-			if(in.readInt() == 0)
-				break;
-			else{
-				String name = "", pwd = "";
-				
-				try {
-					name = (String) in.readObject();
-					pwd = (String) in.readObject();
-				} catch (ClassNotFoundException e1) {
-					e1.printStackTrace();
-				}
-				
-				Entry<String, String> e = new myEntry<String, String>(name,pwd);
-				result.add(e);
-			}
+		try {
+			result = (int) in.readObject();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
 		}
 		
 		return result;
-	}
-
-	private void createUser(String name, String pwd, ObjectOutputStream out, ObjectInputStream in) throws IOException {
-		//diz que vai criar um utilizador
-		out.writeInt(0);
-		
-		out.writeObject(name);
-		out.writeObject(pwd);
-		
-		boolean ok = in.readBoolean();
-		
-		if(ok) 
-			System.out.println("OK");
-		else System.out.println("ERRO");
 	}
 
 	private static boolean makeRepositoryLocal(String name) {
