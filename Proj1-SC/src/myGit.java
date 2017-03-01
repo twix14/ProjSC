@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -35,7 +36,8 @@ public class myGit {
 			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 			
 			if(args[0].equals("-init"))
-				makeRepositoryLocal();
+				if(makeRepositoryLocal(args[1]))
+					System.out.print("-- O repositório myrep foi criado localmente");
 			else if(args.length == 3){ //Cria um novo utilizador
 				user(args, out, in);	
 			}else {
@@ -132,9 +134,9 @@ public class myGit {
 		else System.out.println("ERRO");
 	}
 
-	private static void makeRepositoryLocal() {
-		// TODO Auto-generated method stub
-		
+	private static boolean makeRepositoryLocal(String name) {
+		File dir = new File(name);
+		return dir.mkdir();
 	}
 	
 }

@@ -67,11 +67,7 @@ public class myGitServer {
 					e1.printStackTrace();
 				}
 				
-				if(verificaUtilizador(user, passwd))
-					System.out.println("correto");
-				else{
-					System.out.println("tente de novo");
-				}
+				outStream.writeObject(verificaUtilizador(user, passwd));
 				
 					
 				outStream.close();
@@ -84,7 +80,7 @@ public class myGitServer {
 			}
 		}
 
-		private Boolean verificaUtilizador(String user, String passwd) throws IOException {
+		private int verificaUtilizador(String user, String passwd) throws IOException {
 			BufferedReader reader = null;
 			File utilizadores = new File ("utilizadores.txt");
 			utilizadores.createNewFile();
@@ -98,10 +94,10 @@ public class myGitServer {
 				String[] curr = line.split(" ");
 				if(user.equals(curr[1])){
 					if(passwd.equals(curr[2]))
-						return true;
+						return 0;
 					else{
 						System.out.println("Palavra passe incorreta");
-						return false;
+						return -1;
 					}	
 				}	
 			}
@@ -110,7 +106,7 @@ public class myGitServer {
 			
 			reader.close();
 			writer.close();
-			return true;
+			return 1;
 		}
 
 
