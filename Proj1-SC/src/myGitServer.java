@@ -96,10 +96,8 @@ public class myGitServer {
 			String line;
 			while((line = reader.readLine()) != null){
 				String[] curr = line.split(" ");
-				if(user.equals(curr[1])){
-					if(passwd.equals(curr[2]))
+				if(user.equals(curr[0]))
 						return 0;
-				}	
 			}
 			BufferedWriter writer = new BufferedWriter(new FileWriter("utilizadores.txt")); 
 			writer.write(user + " " + passwd);

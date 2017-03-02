@@ -39,6 +39,8 @@ public class myGit {
 					System.out.println("-- O utilizador " + args[0] + " vai ser criado");
 					if(user(args, out, in) == 1)
 						System.out.println("-- O utilizador " + args[0] + " foi criado");
+					else
+						System.out.println("-- O utilizador ja existe!");
 				} else {
 					
 					switch (args[4]) {
