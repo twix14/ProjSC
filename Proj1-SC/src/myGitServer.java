@@ -59,19 +59,35 @@ public class myGitServer {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
-				String user = null;
-				String passwd = null;
-				try {
-					user = (String)inStream.readObject();
-					passwd = (String)inStream.readObject();
-					System.out.println("thread: depois de receber a password e o user");
-				}catch (ClassNotFoundException e1) {
-					e1.printStackTrace();
-				}
+				String user = (String)inStream.readObject();
+				String passwd = (String)inStream.readObject();
 				
 				outStream.writeObject(verificaUtilizador(user, passwd));
 				
+				if(inStream.readBoolean()){ //true se tiver operacao pull,push...
+				
+					Object obj = inStream.readObject();
+					String classe = "";
 					
+					switch (obj.getClass().getName()) {
+						  case "Pull":
+							  classe = "Pull";
+							  break;
+						  case "Push":
+							  classe = "Push";
+							  break;
+						  case "Share":
+							  classe = "Share";
+							  break;
+						  case "Remove":
+							  classe = "Remove";
+							  break;
+					}
+					
+					outStream.writeObject(classe); //teste
+				
+				}
+				
 				outStream.close();
 				inStream.close();
 
@@ -80,6 +96,8 @@ public class myGitServer {
 			} catch (SocketException e) {
 				System.err.println("Um dos clientes desligou-se"); //para nao dar erro quando cliente fecha a socket
 			} catch (IOException e) {
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			}
 		}

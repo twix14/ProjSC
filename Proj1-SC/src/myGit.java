@@ -41,17 +41,30 @@ public class myGit {
 						System.out.println("-- O utilizador " + args[0] + " foi criado");
 					else
 						System.out.println("-- O utilizador ja existe!");
+					out.writeBoolean(false); //indica que nao tem mais operacoes a fazer
+					
 				} else {
+	
+					if(user(args, out, in) == 1)
+						System.out.println("-- O utilizador " + args[0] + " foi criado");
+					out.writeBoolean(true); //indica que vai fazer operacao de pull,push...
+					Object op = null;
 					
 					switch (args[4]) {
-						case "-push": break;
-						
-						case "-pull": break;
-						
-						case "-share": break;
-						
-						case "-remove": break;
+						case "-push":
+							op =  new Push();
+							break;
+						case "-pull":
+							op = new Pull();
+							break;
+						case "-share":
+							op = new Share();
+							break;
+						case "-remove":
+							op = new Remove();
+							break;
 					}
+					sendObj(op, out, in);
 				}
 				
 				out.close();
@@ -62,7 +75,16 @@ public class myGit {
 				e.printStackTrace();
 			}
 		}
-	}	
+	}
+	
+	private void sendObj(Object obj, ObjectOutputStream out, ObjectInputStream in) throws IOException{
+		out.writeObject(obj);
+		try {
+			System.out.println(in.readObject().toString());
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	private int user(String[] args, ObjectOutputStream out, ObjectInputStream in) throws IOException {
 		String pwd = "";
