@@ -24,6 +24,7 @@ public class myGit {
 				String[] temp = args[1].split(":");
 				socket = new Socket(temp[0], 
 						Integer.parseInt(temp[1]));
+				System.out.println("A conectar...");
 			} catch (IOException e) {
 				System.err.println(e.getMessage());
 				System.exit(-1);
@@ -33,14 +34,11 @@ public class myGit {
 				ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 					
-				if(args.length == 3){ //Cria um novo utilizador
+				if(args.length == 4){ //Cria um novo utilizador
 					
 					System.out.println("-- O utilizador " + args[0] + " vai ser criado");
 					if(user(args, out, in) == 1)
 						System.out.println("-- O utilizador " + args[0] + " foi criado");
-					else
-						System.out.println("-- A password nao corresponde ao utilizador");
-					
 				} else {
 					
 					switch (args[4]) {

@@ -9,8 +9,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class myGitServer {
+	
 	public static void main(String[] args) {
 		System.out.println("servidor: main");
 		myGitServer server = new myGitServer();
@@ -41,7 +43,7 @@ public class myGitServer {
 		}
 		//sSoc.close();
 	}
-	//Threads utilizadas para comunicacao com os clientes
+	
 	class ServerThread extends Thread {
 
 		private Socket socket = null;
@@ -75,6 +77,8 @@ public class myGitServer {
 
 				socket.close();
 
+			} catch (SocketException e) {
+				System.err.println("Um dos clientes desligou-se"); //para nao dar erro quando cliente fecha a socket
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -95,10 +99,6 @@ public class myGitServer {
 				if(user.equals(curr[1])){
 					if(passwd.equals(curr[2]))
 						return 0;
-					else{
-						System.out.println("Palavra passe incorreta");
-						return -1;
-					}	
 				}	
 			}
 			BufferedWriter writer = new BufferedWriter(new FileWriter("utilizadores.txt")); 
