@@ -66,7 +66,10 @@ public class myGit {
 						op = new Pull();
 						break;
 					case "-share":
-						op = new Share();
+						op = new Share(args[7], args[1], args[6]);
+						out.writeObject(op);
+						if(!in.readBoolean())
+							System.out.println("Erro: o utilizador " + args[7] + " não existe");
 						break;
 					case "-remove":
 						op = new Remove();

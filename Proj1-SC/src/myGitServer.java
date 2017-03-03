@@ -78,7 +78,14 @@ public class myGitServer {
 							  makePush(outStream, inStream, push, user);
 							  break;
 						  case "Share":
-							  classe = "Share";
+							  Share share = (Share) obj;
+							  if(userPath(share.getUserToShare())){
+								  share(share.pathDestiny(), share.getUserToShare());
+								  outStream.writeBoolean(true);
+							  }
+							  else{
+								  outStream.writeBoolean(false);
+							  }
 							  break;
 						  case "Remove":
 							  classe = "Remove";
@@ -101,6 +108,12 @@ public class myGitServer {
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			}
+		}
+
+		private void share(String pathDestiny, String userToShare) throws IOException {
+			BufferedWriter writer = new BufferedWriter(new FileWriter(pathDestiny)); 
+			writer.write(userToShare);
+			writer.close();
 		}
 
 		private void makePush(ObjectOutputStream outStream, ObjectInputStream inStream, Push push, String user) throws IOException {
