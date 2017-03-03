@@ -1,10 +1,15 @@
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
@@ -50,7 +55,6 @@ public class myGitServer {
 
 		ServerThread(Socket inSoc) {
 			socket = inSoc;
-			System.out.println("thread do server para cada cliente");
 		}
 
 		public void run(){
@@ -74,7 +78,7 @@ public class myGitServer {
 							  classe = "Pull";
 							  break;
 						  case "Push":
-							  Push push =(Push) obj;
+							  Push push = (Push) obj;
 							  makePush(outStream, inStream, push, user);
 							  break;
 						  case "Share":
@@ -111,33 +115,86 @@ public class myGitServer {
 		}
 
 		private void share(String pathDestiny, String userToShare) throws IOException {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(pathDestiny)); 
+			BufferedWriter writer = new BufferedWriter(new FileWriter(pathDestiny + "/" + "share.txt")); 
 			writer.write(userToShare);
 			writer.close();
 		}
 
 		private void makePush(ObjectOutputStream outStream, ObjectInputStream inStream, Push push, String user) throws IOException {
-			String[] path = push.getPath().split("/");
+			String[] path = push.getPath().split("\\\\");
+			File rep = null;
 			
 			if(userPath(path[0])){
 				//diretorio partilhado
 			} else { //diretorio do dono
+				rep = new File(user + "/" + path[0]);
 				if(push.isDir()){
 					File f = new File(user);
-					File share = new File("share.txt");
+					File share = new File(user + "/" + "share.txt");
 					
 					if(!f.exists() && !share.exists()){
 						f.mkdir();
 						share.createNewFile();
 					}
 					
-					File rep = new File(user + "/" + path[0]);
 					if(!rep.exists()){
 						rep.mkdir();
 						//diretorio criado
 					}
 				}
 			}
+			
+			File[] files = push.getFiles();
+			for(int i = 0; i < files.length; i++){
+				FileInputStream fil =  new FileInputStream(files[i]);
+				InputStream fis = new BufferedInputStream(fil);
+				String[] extension = files[i].getName().split("\\.(?=[^\\.]+$)");
+				String version = fileVersion(files[i], rep, extension[0], extension[1]);
+				//controlar as versoes aqui
+				
+				if(!version.equals("up-to-date")){
+					
+					FileOutputStream fos = new FileOutputStream(rep + "/" + extension[0] + version + extension[1]);
+
+			        byte[] bytes = new byte[1024];
+					
+					int temp = (int) files[i].length();
+					int count = 1024;
+					
+			        while ((count = fis.read(bytes, 0, temp < 1024 ? temp : 1024)) > 0) {
+			        	fos.write(bytes, 0, count);
+			            temp -= count;
+			            fos.flush();
+			        }
+			        fos.close();
+				}
+				
+		        fil.close();
+				fis.close();
+			}
+		}
+
+		/**
+		 * Checks if file being received is more recent than the on the server
+		 * if not returns "up-to-date"
+		 * @param rep 
+		 */
+		private String fileVersion(File fl, File rep, String name, String extension) {
+			File[] versions = getNewestVersion(rep, name, extension);
+			if(versions.length == 0)
+				return "_v0.";
+			else if(fl.lastModified() > versions[versions.length-1].lastModified()){ //ficheiro mais recente do que aquele que esta no servidor
+				return "_v" + versions.length + ".";
+			} else return "up-to-date";
+		}
+
+		private File[] getNewestVersion(File dir, String name, String extension) {
+			return dir.listFiles(new FilenameFilter(){
+			  public boolean accept(File dir, String name)
+			  {	
+			     return name.startsWith(name) && name.endsWith("." + extension);
+			  }
+			});
 		}
 
 		private boolean userPath(String string) throws IOException {
@@ -162,7 +219,10 @@ public class myGitServer {
 		private int verificaUtilizador(String user, String passwd) throws IOException {
 			BufferedReader reader = null;
 			File utilizadores = new File ("utilizadores.txt");
-			utilizadores.createNewFile();
+			
+			if(!utilizadores.exists())
+				utilizadores.createNewFile();
+			
 			try {
 				reader = new BufferedReader(new FileReader("utilizadores.txt"));
 			} catch (FileNotFoundException e) {

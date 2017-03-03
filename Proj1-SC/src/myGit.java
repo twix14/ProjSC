@@ -59,7 +59,7 @@ public class myGit {
 							String[] path = args[5].split("/");
 							file[0] = new File(path[path.length-1]);
 						}
-						op =  new Push(args[5], args[5].contains("/"), 
+						op =  new Push(args[5], !args[5].contains("."), 
 								isFile? file : getFilesDir(new File(args[5])));
 						break;
 					case "-pull":
