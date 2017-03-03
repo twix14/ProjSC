@@ -74,7 +74,8 @@ public class myGitServer {
 							  classe = "Pull";
 							  break;
 						  case "Push":
-							  classe = "Push";
+							  Push push =(Push) obj;
+							  makePush(push, user);
 							  break;
 						  case "Share":
 							  classe = "Share";
@@ -99,6 +100,13 @@ public class myGitServer {
 				e.printStackTrace();
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
+			}
+		}
+
+		private void makePush(Push push, String user) {
+			File f = new File(user);
+			if(!f.exists()){
+				f.mkdir();
 			}
 		}
 

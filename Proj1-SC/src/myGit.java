@@ -11,15 +11,15 @@ public class myGit {
 		myGit connect = new myGit();
 		connect.connectToServer(args);
 	}
-	
+
 	private void connectToServer(String[] args) {
 		Socket socket = null;
-		
+
 		if(args[0].equals("-init")){
 			if(makeRepositoryLocal(args[1]))
 				System.out.print("-- O repositório myrep foi criado localmente");
 		} else {
-		
+
 			try {
 				String[] temp = args[1].split(":");
 				socket = new Socket(temp[0], 
@@ -29,54 +29,54 @@ public class myGit {
 				System.err.println(e.getMessage());
 				System.exit(-1);
 			}
-			
+
 			try{
 				ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-					
+
 				if(args.length == 4){ //Cria um novo utilizador
-					
+
 					System.out.println("-- O utilizador " + args[0] + " vai ser criado");
 					if(user(args, out, in) == 1)
 						System.out.println("-- O utilizador " + args[0] + " foi criado");
 					else
 						System.out.println("-- O utilizador ja existe!");
 					out.writeBoolean(false); //indica que nao tem mais operacoes a fazer
-					
+
 				} else {
-	
+
 					if(user(args, out, in) == 1)
 						System.out.println("-- O utilizador " + args[0] + " foi criado");
 					out.writeBoolean(true); //indica que vai fazer operacao de pull,push...
 					Object op = null;
-					
+
 					switch (args[4]) {
-						case "-push":
-							op =  new Push();
-							break;
-						case "-pull":
-							op = new Pull();
-							break;
-						case "-share":
-							op = new Share();
-							break;
-						case "-remove":
-							op = new Remove();
-							break;
+					case "-push":
+						op =  new Push(args[5]);
+						break;
+					case "-pull":
+						op = new Pull();
+						break;
+					case "-share":
+						op = new Share();
+						break;
+					case "-remove":
+						op = new Remove();
+						break;
 					}
 					sendObj(op, out, in);
 				}
-				
+
 				out.close();
 				in.close();
 				socket.close();
-				
+
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-	
+
 	private void sendObj(Object obj, ObjectOutputStream out, ObjectInputStream in) throws IOException{
 		out.writeObject(obj);
 		try {
@@ -85,11 +85,11 @@ public class myGit {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private int user(String[] args, ObjectOutputStream out, ObjectInputStream in) throws IOException {
 		String pwd = "";
 		Scanner keyboard = null;
-		
+
 		while(!args[3].equals(pwd)){
 			keyboard = new Scanner(System.in);
 			System.out.println("Confirmar password do utilizador " + args[0]);
@@ -97,20 +97,20 @@ public class myGit {
 			if(!pwd.equals(args[3]))
 				System.out.println("As passwords nao correspondem");
 		}
-		
+
 		keyboard.close();
-		
+
 		out.writeObject((String) args[0]);
 		out.writeObject((String) args[3]);
-		
+
 		int result = 0;
-		
+
 		try {
 			result = (int) in.readObject();
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
-		
+
 		return result;
 	}
 
@@ -118,5 +118,5 @@ public class myGit {
 		File dir = new File(name);
 		return dir.mkdir();
 	}
-	
+
 }
