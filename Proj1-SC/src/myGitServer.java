@@ -75,7 +75,7 @@ public class myGitServer {
 							  break;
 						  case "Push":
 							  Push push =(Push) obj;
-							  makePush(push, user);
+							  makePush(outStream, inStream, push, user);
 							  break;
 						  case "Share":
 							  classe = "Share";
@@ -103,11 +103,47 @@ public class myGitServer {
 			}
 		}
 
-		private void makePush(Push push, String user) {
-			File f = new File(user);
-			if(!f.exists()){
-				f.mkdir();
+		private void makePush(ObjectOutputStream outStream, ObjectInputStream inStream, Push push, String user) throws IOException {
+			String[] path = push.getPath().split("/");
+			
+			if(userPath(path[0])){
+				//diretorio partilhado
+			} else { //diretorio do dono
+				if(push.isDir()){
+					File f = new File(user);
+					File share = new File("share.txt");
+					
+					if(!f.exists() && !share.exists()){
+						f.mkdir();
+						share.createNewFile();
+					}
+					
+					File rep = new File(user + "/" + path[0]);
+					if(!rep.exists()){
+						rep.mkdir();
+						//diretorio criado
+					}
+				}
 			}
+		}
+
+		private boolean userPath(String string) throws IOException {
+			BufferedReader reader = null;
+			
+			try {
+				reader = new BufferedReader(new FileReader("utilizadores.txt"));
+			} catch (FileNotFoundException e) {
+					e.printStackTrace();
+			}
+			
+			String line;
+			while((line = reader.readLine()) != null){
+				String[] curr = line.split(" ");
+				if(string.equals(curr[0]))
+						return true;
+			}
+			
+			return false;
 		}
 
 		private int verificaUtilizador(String user, String passwd) throws IOException {

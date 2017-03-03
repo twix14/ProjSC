@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.List;
 import java.util.Scanner;
 
 public class myGit {
@@ -52,7 +53,14 @@ public class myGit {
 
 					switch (args[4]) {
 					case "-push":
-						op =  new Push(args[5]);
+						File[] file = new File[1];
+						boolean isFile = args[5].contains(".");
+						if(isFile){
+							String[] path = args[5].split("/");
+							file[0] = new File(path[path.length-1]);
+						}
+						op =  new Push(args[5], args[5].contains("/"), 
+								isFile? file : getFilesDir(new File(args[5])));
 						break;
 					case "-pull":
 						op = new Pull();
@@ -75,6 +83,10 @@ public class myGit {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	private File[] getFilesDir(File rep){
+		  return rep.listFiles();
 	}
 
 	private void sendObj(Object obj, ObjectOutputStream out, ObjectInputStream in) throws IOException{
