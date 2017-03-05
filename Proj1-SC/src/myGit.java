@@ -66,10 +66,7 @@ public class myGit {
 						op = new Pull();
 						break;
 					case "-share":
-						op = new Share(args[7], args[1], args[6]);
-						out.writeObject(op);
-						if(!in.readBoolean())
-							System.out.println("Erro: o utilizador " + args[7] + " não existe");
+						op = new Share(args[6], args[0], args[5]);						
 						break;
 					case "-remove":
 						op = new Remove();
@@ -87,13 +84,21 @@ public class myGit {
 			}
 		}
 	}
-	
+
 	private File[] getFilesDir(File rep){
-		  return rep.listFiles();
+		return rep.listFiles();
 	}
 
 	private void sendObj(Object obj, ObjectOutputStream out, ObjectInputStream in) throws IOException{
 		out.writeObject(obj);
+		if(obj instanceof Share){
+			Share temp = (Share) obj;
+			if(!in.readBoolean())
+				System.out.println("Erro: o utilizador " + temp.getUserToShare() + " não existe");
+			else{
+				System.out.println("-- O repositório myrep foi partilhado com o utilizador " + temp.getUserToShare());
+			}
+		}
 		try {
 			System.out.println(in.readObject().toString());
 		} catch (ClassNotFoundException e) {
