@@ -99,7 +99,6 @@ public class myGitServer {
 					case "Remove":
 						Remove remove = (Remove) obj;
 						remove.removeUser();
-						break;
 					}
 
 					outStream.writeObject(classe); //teste
