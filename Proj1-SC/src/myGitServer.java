@@ -17,7 +17,7 @@ import java.net.Socket;
 import java.net.SocketException;
 
 public class myGitServer {
-	
+
 	public static void main(String[] args) {
 		System.out.println("servidor: main");
 		myGitServer server = new myGitServer();
@@ -48,7 +48,7 @@ public class myGitServer {
 		}
 		//sSoc.close();
 	}
-	
+
 	class ServerThread extends Thread {
 
 		private Socket socket = null;
@@ -58,48 +58,54 @@ public class myGitServer {
 		}
 
 		public void run(){
-			
+
 			try {
 				ObjectOutputStream outStream = new ObjectOutputStream(socket.getOutputStream());
 				ObjectInputStream inStream = new ObjectInputStream(socket.getInputStream());
 
 				String user = (String)inStream.readObject();
 				String passwd = (String)inStream.readObject();
-				
+
 				outStream.writeObject(verificaUtilizador(user, passwd));
-				
+
 				if(inStream.readBoolean()){ //true se tiver operacao pull,push...
-				
+
 					Object obj = inStream.readObject();
 					String classe = "";
-					
+
 					switch (obj.getClass().getName()) {
-						  case "Pull":
-							  classe = "Pull";
-							  break;
-						  case "Push":
-							  Push push = (Push) obj;
-							  makePush(outStream, inStream, push, user);
-							  break;
-						  case "Share":
-							  Share share = (Share) obj;
-							  if(userPath(share.getUserToShare())){
-								  share(share.pathDestiny(), share.getUserToShare());
-								  outStream.writeBoolean(true);
-							  }
-							  else{
-								  outStream.writeBoolean(false);
-							  }
-							  break;
-						  case "Remove":
-							  classe = "Remove";
-							  break;
+					case "Pull":
+						classe = "Pull";
+						break;
+					case "Push":
+						Push push = (Push) obj;
+						makePush(outStream, inStream, push, user);
+						break;
+					case "Share":
+						Share share = (Share) obj;
+						if(userPath(share.getUserToShare())){
+							boolean escreveu = share(share.pathDestiny(), share.getUserToShare());
+							if(escreveu){
+								outStream.writeBoolean(true);
+							}
+							else{
+								outStream.writeBoolean(false);
+							}
+						}
+						else{
+							outStream.writeBoolean(false);
+						}
+						break;
+					case "Remove":
+						Remove remove = (Remove) obj;
+						remove.removeUser();
+						break;
 					}
-					
+
 					outStream.writeObject(classe); //teste
-				
+
 				}
-				
+
 				outStream.close();
 				inStream.close();
 
@@ -114,36 +120,51 @@ public class myGitServer {
 			}
 		}
 
-		private void share(String pathDestiny, String userToShare) throws IOException {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(pathDestiny + "/" + "share.txt")); 
-			writer.write(userToShare);
-			writer.close();
+		//mudar tipo para boolean para saber se escreveu do outro lado
+		private boolean share(String pathDestiny, String userToShare) throws IOException {
+			BufferedReader reader = null;
+			reader = new BufferedReader(new FileReader(pathDestiny + "/" + "share.txt"));
+			String line;
+			boolean userE = false;
+			while((line = reader.readLine()) != null){
+				userE = line.equals(userToShare);
+			}
+			reader.close();
+			if(!userE){
+				BufferedWriter writer = new BufferedWriter(new FileWriter(pathDestiny + "/" + "share.txt", true)); 
+				writer.write(userToShare);
+				writer.newLine();
+				writer.close();
+				return true;
+			}
+			
+			return false;
 		}
 
 		private void makePush(ObjectOutputStream outStream, ObjectInputStream inStream, Push push, String user) throws IOException {
 			String[] path = push.getPath().split("\\\\");
 			File rep = null;
-			
+
 			if(userPath(path[0])){
 				//diretorio partilhado
 			} else { //diretorio do dono
 				rep = new File(user + "/" + path[0]);
 				if(push.isDir()){
 					File f = new File(user);
-					File share = new File(user + "/" + "share.txt");
-					
+					File share = new File(user + "/" + push.getPath() + "/" + "share.txt");
+
 					if(!f.exists() && !share.exists()){
 						f.mkdir();
-						share.createNewFile();
 					}
-					
+
 					if(!rep.exists()){
 						rep.mkdir();
+						share.createNewFile();
 						//diretorio criado
 					}
 				}
 			}
-			
+
 			File[] files = push.getFiles();
 			for(int i = 0; i < files.length; i++){
 				FileInputStream fil =  new FileInputStream(files[i]);
@@ -151,25 +172,25 @@ public class myGitServer {
 				String[] extension = files[i].getName().split("\\.(?=[^\\.]+$)");
 				String version = fileVersion(files[i], rep, extension[0], extension[1]);
 				//controlar as versoes aqui
-				
+
 				if(!version.equals("up-to-date")){
-					
+
 					FileOutputStream fos = new FileOutputStream(rep + "/" + extension[0] + version + extension[1]);
 
-			        byte[] bytes = new byte[1024];
-					
+					byte[] bytes = new byte[1024];
+
 					int temp = (int) files[i].length();
 					int count = 1024;
-					
-			        while ((count = fis.read(bytes, 0, temp < 1024 ? temp : 1024)) > 0) {
-			        	fos.write(bytes, 0, count);
-			            temp -= count;
-			            fos.flush();
-			        }
-			        fos.close();
+
+					while ((count = fis.read(bytes, 0, temp < 1024 ? temp : 1024)) > 0) {
+						fos.write(bytes, 0, count);
+						temp -= count;
+						fos.flush();
+					}
+					fos.close();
 				}
-				
-		        fil.close();
+
+				fil.close();
 				fis.close();
 			}
 		}
@@ -190,58 +211,60 @@ public class myGitServer {
 
 		private File[] getNewestVersion(File dir, String name, String extension) {
 			return dir.listFiles(new FilenameFilter(){
-			  public boolean accept(File dir, String name)
-			  {	
-			     return name.startsWith(name) && name.endsWith("." + extension);
-			  }
+				public boolean accept(File dir, String name)
+				{	
+					return name.startsWith(name) && name.endsWith("." + extension);
+				}
 			});
 		}
 
 		private boolean userPath(String string) throws IOException {
 			BufferedReader reader = null;
-			
+
 			try {
 				reader = new BufferedReader(new FileReader("utilizadores.txt"));
 			} catch (FileNotFoundException e) {
-					e.printStackTrace();
+				e.printStackTrace();
 			}
-			
+
 			String line;
 			while((line = reader.readLine()) != null){
 				String[] curr = line.split(" ");
 				if(string.equals(curr[0]))
-						return true;
+					return true;
 			}
-			
+
 			return false;
 		}
 
 		private int verificaUtilizador(String user, String passwd) throws IOException {
 			BufferedReader reader = null;
 			File utilizadores = new File ("utilizadores.txt");
-			
+
 			if(!utilizadores.exists())
 				utilizadores.createNewFile();
-			
+
 			try {
 				reader = new BufferedReader(new FileReader("utilizadores.txt"));
 			} catch (FileNotFoundException e) {
-					e.printStackTrace();
+				e.printStackTrace();
 			}
 			String line;
 			while((line = reader.readLine()) != null){
 				String[] curr = line.split(" ");
 				if(user.equals(curr[0]))
-						return 0;
+					return 0;
 			}
-			BufferedWriter writer = new BufferedWriter(new FileWriter("utilizadores.txt")); 
+			BufferedWriter writer = new BufferedWriter(new FileWriter("utilizadores.txt", true)); 
 			writer.write(user + " " + passwd);
-			
-			reader.close();
+			writer.newLine();
+
 			writer.close();
+			reader.close();
 			return 1;
 		}
 
 
 	}
 }
+
