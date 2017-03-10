@@ -3,6 +3,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class myGit {
@@ -14,6 +16,8 @@ public class myGit {
 
 	private void connectToServer(String[] args) {
 		Socket socket = null;
+		ClientStub cs = new ClientStub();
+		Result res = null;
 
 		if(args[0].equals("-init")){
 			if(makeRepositoryLocal(args[1]))
@@ -48,31 +52,41 @@ public class myGit {
 					if(user(args, out, in) == 1)
 						System.out.println("-- O utilizador " + args[0] + " foi criado");
 					out.writeBoolean(true); //indica que vai fazer operacao de pull,push...
-					Object op = null;
 
 					switch (args[4]) {
 					case "-push":
-						File[] file = new File[1];
 						boolean isFile = args[5].contains(".");
+						List<File> singleFile = new ArrayList<File>();
+						List<Pair<String, Long>> single =  new ArrayList<Pair<String, Long>>();
+						
 						if(isFile){
-							String[] path = args[5].split("/");
-							file[0] = new File(path[path.length-1]);
+							singleFile.add(new File(args[5]));
+							single.add(new Pair<String, Long>(singleFile.get(0).getName(), singleFile.get(0).lastModified()));
 						}
-						op =  new Push(args[5], !args[5].contains("."), 
-								isFile? file : getFilesDir(new File(args[5])));
+						
+						File rep = new File(args[5]);
+						List<Pair<String, Long>> files = isFile? single : getFiles(getFilesDir(rep));
+						Push psh =  new Push(rep.getName().contains(".")? rep.getParent() : rep.getName(), 
+								!args[5].contains("."), files);
+						res = cs.sendReceivePush(psh, out, in, isFile? singleFile : getFilesDir(rep), args[0]);
+						//falta eliminar ficheiros que ja nao estejam no repositorio mas que estao no servidor
 						break;
 					case "-pull":
-						op = new Pull();
+						Pull pll = new Pull();
+						res = cs.sendReceivePull(pll, out, in);
 						break;
 					case "-share":
-						op = new Share(args[6], args[0], args[5]);						
+						Share shr = new Share(args[6], args[0], args[5]);
+						res = cs.sendReceiveShare(shr, out, in);
 						break;
 					case "-remove":
-						op = new Remove(args[5], args[6], args[0]);
+						Remove rm = new Remove(args[5], args[6], args[0]);
+						res = cs.sendReceiveRemove(rm, out, in);
 						break;
 					}
-					sendObj(op, out, in);
 				}
+				
+				System.out.println(res);
 
 				out.close();
 				in.close();
@@ -80,29 +94,26 @@ public class myGit {
 
 			} catch (IOException e) {
 				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
 			}
 		}
 	}
-
-	private File[] getFilesDir(File rep){
-		return rep.listFiles();
+	
+	private List<Pair<String, Long>> getFiles(List<File> files){
+		List<Pair<String, Long>> result = new ArrayList<Pair<String, Long>>();
+		
+		for(File fl : files)
+			result.add(new Pair<String, Long>(fl.getName(), fl.lastModified()));
+		
+		return result;
 	}
 
-	private void sendObj(Object obj, ObjectOutputStream out, ObjectInputStream in) throws IOException{
-		out.writeObject(obj);
-		if(obj instanceof Share){
-			Share temp = (Share) obj;
-			if(!in.readBoolean())
-				System.out.println("Erro: o utilizador " + temp.getUserToShare() + " não existe");
-			else{
-				System.out.println("-- O repositório myrep foi partilhado com o utilizador " + temp.getUserToShare());
-			}
-		}
-		try {
-			System.out.println(in.readObject().toString());
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
+	private List<File> getFilesDir(File rep){
+		List<File> result = new ArrayList<File>();
+		for(File fl : rep.listFiles())
+			result.add(fl);
+		return result;
 	}
 
 	private int user(String[] args, ObjectOutputStream out, ObjectInputStream in) throws IOException {

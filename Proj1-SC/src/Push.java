@@ -1,16 +1,16 @@
-import java.io.File;
 import java.io.Serializable;
+import java.util.List;
 
 public class Push implements Serializable{
 
 	private String path;
 	private boolean dir;
-	private File[] files;
+	private List<Pair<String, Long>> files;
 	
 	private static final long serialVersionUID = 2355826059562172987L;
 
 	//0 directorio 1 ficheiro 
-	public Push(String args, boolean dir, File[] files) {
+	public Push(String args, boolean dir, List<Pair<String, Long>> files) {
 		this.path = args;
 		this.dir = dir;
 		this.files = files;
@@ -20,7 +20,7 @@ public class Push implements Serializable{
 		return path;
 	}
 	
-	public File[] getFiles(){
+	public List<Pair<String, Long>> getFiles(){
 		return files;
 	}
 	
