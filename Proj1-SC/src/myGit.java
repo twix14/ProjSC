@@ -72,7 +72,7 @@ public class myGit {
 						//falta eliminar ficheiros que ja nao estejam no repositorio mas que estao no servidor
 						break;
 					case "-pull":
-						Pull pll = new Pull();
+						Pull pll = new Pull(args[5], !args[5].contains("."));
 						res = cs.sendReceivePull(pll, out, in);
 						break;
 					case "-share":

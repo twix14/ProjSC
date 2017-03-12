@@ -71,6 +71,8 @@ public class myGitServer {
 
 					switch (obj.getClass().getName()) {
 						case "Pull":
+							Pull pull = (Pull) obj;
+							res = ss.doPull(pull, user, outStream, inStream);
 							break;
 						case "Push":
 							Push push = (Push) obj;
