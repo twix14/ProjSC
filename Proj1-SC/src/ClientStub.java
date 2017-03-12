@@ -2,6 +2,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Iterator;
 import java.util.List;
 
 public class ClientStub {
@@ -29,6 +30,7 @@ public class ClientStub {
 	//Envia os dados de um pull de um repositorio para o servidor
 	public Result sendReceivePull(Pull pll, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException {
 		out.writeObject(pll);
+		
 			
 		return (Result) in.readObject();
 	}
@@ -53,4 +55,6 @@ public class ClientStub {
 		
 		return (Result) in.readObject();
 	}
+	
+
 }
