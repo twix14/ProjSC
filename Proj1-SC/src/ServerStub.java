@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
+import java.util.List;
 
 public class ServerStub {
 
@@ -60,14 +61,21 @@ public class ServerStub {
 	
 	public Result doPull(Pull pull, String user, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
 		File rep = null;
-
+		File dir = new File(user);
+		
 		if(!userPath(pull.getRep())){
+			//Criar um rep para o utilizador que quer da o pull no caso de este nao existir
+			if(!dir.exists()){
+				dir.mkdir();
+			}
 			rep = new File(pull.getRep());
-			if(pull.isDir()){//Erro porque nao tenho aqui o metodo
-				File f = new File(user);
-				File share = new File(pull.getRep()+ "/" + "share.txt");
+			if(pull.isDir()){
+				//File f = new File(user);
+				String[] dirToCpy = pull.getRep().split("/");
+				File share = new File(user + "/" + dirToCpy[dirToCpy.length - 1]+ "/" + "share.txt");
+				share.createNewFile();
 
-				if(!f.exists() && !share.exists()){
+				/*if(!f.exists() && !share.exists()){
 					f.mkdir();
 				}
 
@@ -75,17 +83,20 @@ public class ServerStub {
 					rep.mkdir();
 					share.createNewFile();
 					//diretorio criado
-				}
+				}*/
 			}
 		}
 		FileUtilities fu = new FileUtilities();
+		List<Pair<String,Long>> listFiles = pull.getFiles();
 		
-		for(Pair<String, Long> file : pull.getFiles()){
+		if(listFiles == null) return null;
+		
+		for(Pair<String, Long> file : listFiles){
 			String[] extension = file.getSt().split("\\.(?=[^\\.]+$)");
 			if(!fu.checkFile(in, out)) //se o ficheiro nao estiver atualizado
 				fu.downloadFile(in, out, rep + " " + extension[0] + " " +  extension[1], true);
 		}
-		
+		/*Não percebi sorry*/
 		for(File fl : rep.listFiles()){
 			String[] file = fl.getName().split("////");
 			if(!file[file.length-1].equals("share.txt")){
