@@ -38,16 +38,16 @@ public class ClientStub {
 			for(Pair<String, Long> file : pll2.getFiles()){
 				String[] extension = file.getSt().split("\\.(?=[^\\.]+$)");
 				if(!f.checkFile(in, out)) //se o ficheiro nao estiver atualizado
-					f.downloadFile(in, out, myrep[1] + " " + extension[0] + " " +  extension[1], false);
+					f.downloadFile(in, out, /*pll2.getRep() +*/ "myrep/ " + extension[0] + " " +  extension[1], false);
 			}
 
 			List<File> files = getFilesDir(new File(myrep[1]));
 			List<String> filesServ = getFilesServ(pll2.getFiles());
 			List<String> removed = getFileRem(files, filesServ);
-
+			
 			if(removed.size() == 1)
 				System.out.println("-- O ficheiro" + removed.get(0) +"existe localmente mas foi eliminado no servidor");
-			else{
+			else if(removed.size() > 1){
 				System.out.print("-- Os ficheiros " + removed.get(0) + ", ");
 				for(int i = 1; i < removed.size() -1; i++)
 					System.out.print(removed.get(i) + ", ");
