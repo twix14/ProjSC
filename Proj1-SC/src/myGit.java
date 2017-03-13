@@ -16,12 +16,11 @@ public class myGit {
 
 	private void connectToServer(String[] args) {
 		Socket socket = null;
-		ClientStub cs = new ClientStub();
 		Result res = null;
 
 		if(args[0].equals("-init")){
 			if(makeRepositoryLocal(args[1]))
-				System.out.print("-- O repositório myrep foi criado localmente");
+				System.out.print("-- O repositório " + args[1] + " foi criado localmente");
 		} else {
 
 			try {
@@ -67,8 +66,9 @@ public class myGit {
 						List<Pair<String, Long>> files = isFile? single : getFiles(getFilesDir(rep));
 						Push psh =  new Push(rep.getName().contains(".")? rep.getParent() : rep.getName(), 
 								!args[5].contains("."), files);
-						res = cs.sendReceivePush(psh, out, in, isFile? singleFile : getFilesDir(rep), args[0]);
+						res = ClientStub.Instance.sendReceivePush(psh, out, in, isFile? singleFile : getFilesDir(rep), args[0]);
 						//falta eliminar ficheiros que ja nao estejam no repositorio mas que estao no servidor
+						
 						break;
 					case "-pull":
 						String[] s = args[5].split("/");
@@ -79,15 +79,15 @@ public class myGit {
 						else{
 							pll = new Pull(args[5], args[5], !args[5].contains("."));
 						}
-						res = cs.sendReceivePull(pll, out, in);
+						res = ClientStub.Instance.sendReceivePull(pll, out, in);
 						break;
 					case "-share":
 						Share shr = new Share(args[6], args[0], args[5]);
-						res = cs.sendReceiveShare(shr, out, in);
+						res = ClientStub.Instance.sendReceiveShare(shr, out, in);
 						break;
 					case "-remove":
 						Remove rm = new Remove(args[5], args[6], args[0]);
-						res = cs.sendReceiveRemove(rm, out, in);
+						res = ClientStub.Instance.sendReceiveRemove(rm, out, in);
 						break;
 					}
 				}

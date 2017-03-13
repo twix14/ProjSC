@@ -5,10 +5,8 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClientStub {
-
-	private FileUtilities f = new FileUtilities(); 
-
+public enum ClientStub {
+	Instance;
 	//Envia os dados de um push para um repositorio para o servidor
 	public Result sendReceivePush(Push psh, ObjectOutputStream out, ObjectInputStream in, List<File> files, String user) throws IOException, ClassNotFoundException {
 		out.writeObject(psh);
@@ -19,8 +17,8 @@ public class ClientStub {
 		for(File fl : files){
 			String version;
 			Pair<String, Long> file = fls.get(i);
-			if(!(version = f.sendReceiveCheckFile(in, out, file, user + "/" + psh.getPath())).equals("up-to-date"))
-				f.uploadFile(in, out, fl, version);
+			if(!(version = FileUtilities.INSTANCE.sendReceiveCheckFile(in, out, file, user + "/" + psh.getPath())).equals("up-to-date"))
+				FileUtilities.INSTANCE.uploadFile(in, out, fl, version);
 			i++;
 		}
 
@@ -37,9 +35,9 @@ public class ClientStub {
 			String[] myrep = pll2.getRep().split("/");
 			for(Pair<String, Long> file : pll2.getFiles()){
 				String[] extension = file.getSt().split("\\.(?=[^\\.]+$)");
-				if(!f.checkFile(in, out)) //se o ficheiro nao estiver atualizado
+				if(!FileUtilities.INSTANCE.checkFile(in, out)) //se o ficheiro nao estiver atualizado
 					if(!file.getSt().equals("share.txt"))
-						f.downloadFile(in, out, pll2.getLocRep() + " " + extension[0] + " " +  extension[1], false);
+						FileUtilities.INSTANCE.downloadFile(in, out, pll2.getLocRep() + " " + extension[0] + " " +  extension[1], false);
 			}
 
 			List<File> files = getFilesDir(new File(myrep[1]));
@@ -56,7 +54,7 @@ public class ClientStub {
 			}
 		}
 		else{
-			f.downloadFile(in, out, pll2.getLocRep(), false);
+			FileUtilities.INSTANCE.downloadFile(in, out, pll2.getLocRep(), false);
 		}
 		return (Result) in.readObject();
 	}

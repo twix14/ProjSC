@@ -11,8 +11,9 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ServerStub {
-
+public enum ServerStub {
+	Instance;
+	
 	public Result doPush(Push push, String user, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
 		File rep = null;
 
@@ -34,12 +35,11 @@ public class ServerStub {
 				}
 			}
 		}
-		FileUtilities fu = new FileUtilities();
 
 		for(Pair<String, Long> file : push.getFiles()){
 			String[] extension = file.getSt().split("\\.(?=[^\\.]+$)");
-			if(!fu.checkFile(in, out)) //se o ficheiro nao estiver atualizado
-				fu.downloadFile(in, out, rep + " " + extension[0] + " " +  extension[1], true);
+			if(!FileUtilities.INSTANCE.checkFile(in, out)) //se o ficheiro nao estiver atualizado
+				FileUtilities.INSTANCE.downloadFile(in, out, rep + " " + extension[0] + " " +  extension[1], true);
 		}
 
 		for(File fl : rep.listFiles()){
@@ -61,7 +61,6 @@ public class ServerStub {
 	}
 
 	public Result doPull(Pull pull, String user, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
-		FileUtilities f = new FileUtilities();
 		List <File> files = getFilesDir(new File(pull.getRep()));
 		pull.addFiles(getFiles(files));
 		out.writeObject(pull);
@@ -72,12 +71,12 @@ public class ServerStub {
 		for(File fl : files){
 			String version;
 			Pair<String, Long> file = fls.get(i);
-			if(!(version = f.sendReceiveCheckFile(in, out, file, pull.getLocRep())).equals("up-to-date"))
+			if(!(version = FileUtilities.INSTANCE.sendReceiveCheckFile(in, out, file, pull.getLocRep())).equals("up-to-date"))
 				if(!fl.getName().equals("share.txt"))
-					f.uploadFile(in, out, fl, version);
+					FileUtilities.INSTANCE.uploadFile(in, out, fl, version);
 			i++;
 		}
-		return null;
+		return new Result("", true);
 	}
 
 	private List<Pair<String, Long>> getFiles(List<File> files){
@@ -95,29 +94,28 @@ public class ServerStub {
 			result.add(fl);
 		return result;
 	}
-	public Result doShare(String pathDestiny, String userToShare) throws IOException{
+	public Result doShare(Share share) throws IOException{
 		BufferedReader reader = null;
-		reader = new BufferedReader(new FileReader(pathDestiny + "/" + "share.txt"));
+		reader = new BufferedReader(new FileReader(share.pathDestiny() + "/" + "share.txt"));
 		String line;
 		boolean userE = false;
-		Result res = null;
 
 		while((line = reader.readLine()) != null){
-			userE = line.equals(userToShare);
+			userE = line.equals(share.getUserToShare());
 		}
 
 		reader.close();
 
 		if(!userE){
-			BufferedWriter writer = new BufferedWriter(new FileWriter(pathDestiny + "/" + "share.txt", true)); 
-			writer.write(userToShare);
+			BufferedWriter writer = new BufferedWriter(new FileWriter(share.pathDestiny() + "/" + "share.txt", true)); 
+			writer.write(share.getUserToShare());
 			writer.newLine();
 			writer.close();
-			res = new Result("All good", true);
-			return res; //a mudar para construtor!
+			String[] s = share.pathDestiny().split("/");
+			return new Result("-- O repositorio " + s[1] + " foi partilhado com o utilizador " + share.getUserToShare() , true); //a mudar para construtor!
 		}
 
-		return null;
+		return new Result("Erro: O utilizador" + share.getUserToShare() + " não existe", false);
 	}
 
 	public Result doRemove(String path, String user) throws IOException{
@@ -139,8 +137,9 @@ public class ServerStub {
 		reader.close();
 		inputFile.delete();
 		tempFile.renameTo(inputFile);
-
-		return new Result("All good", true);
+		
+		String[] s = path.split("/");
+		return new Result("-- O utilizador " + user + " foi removido do repositório " + s[1], true);
 	}
 
 	public boolean userPath(String string) throws IOException {

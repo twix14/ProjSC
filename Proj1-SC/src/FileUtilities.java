@@ -8,7 +8,8 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-public class FileUtilities {
+public enum FileUtilities {
+	INSTANCE;
 	
 	public void downloadFile(ObjectInputStream in, ObjectOutputStream out, String file, boolean server) throws IOException, ClassNotFoundException{
 		int dim = 0;
@@ -83,7 +84,7 @@ public class FileUtilities {
 	}
 	
 	public void uploadFile(ObjectInputStream in, ObjectOutputStream out, File file, String version) throws IOException, ClassNotFoundException{
-		//out.writeObject((String) version); //so no cliente a rever
+		out.writeObject((String) version); //so no cliente a rever
 		out.writeInt((int)file.length());
 				
 		FileInputStream fil =  new FileInputStream(file);

@@ -66,30 +66,33 @@ public class myGitServer {
 				if(inStream.readBoolean()){ //true se tiver operacao pull,push...
 
 					Object obj = inStream.readObject();
-					ServerStub ss = new ServerStub();
 					Result res = null;
 
 					switch (obj.getClass().getName()) {
 						case "Pull":
 							Pull pull = (Pull) obj;
-							res = ss.doPull(pull, user, outStream, inStream);
+							res = ServerStub.Instance.doPull(pull, user, outStream, inStream);
 							break;
 						case "Push":
 							Push push = (Push) obj;
-							res = ss.doPush(push, user, outStream, inStream);
+							res = ServerStub.Instance.doPush(push, user, outStream, inStream);
 							break;
 						case "Share":
 							Share share = (Share) obj;
-							if(ss.userPath(share.getUserToShare())){
-								res = ss.doShare(share.pathDestiny(), share.getUserToShare());
+							if(ServerStub.Instance.userPath(share.getUserToShare())){
+								res = ServerStub.Instance.doShare(share);
 							}else{
-								res = new Result("No stuff", false);
+								res = new Result("Erro: O utilizador " + share.getUserToShare() + " não existe", false);
 							}
 							break;
 						case "Remove":
 							Remove remove = (Remove) obj;
-							res = ss.doRemove(remove.getUser(),remove.getPath());
-						}
+							res = ServerStub.Instance.doRemove(remove.getPath(), remove.getUser());
+							break;
+						default:
+							res = new Result("", false);
+					}
+					
 
 					outStream.writeObject(res); //teste
 
