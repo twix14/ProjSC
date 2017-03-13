@@ -63,7 +63,6 @@ public class myGit {
 							singleFile.add(new File(args[5]));
 							single.add(new Pair<String, Long>(singleFile.get(0).getName(), singleFile.get(0).lastModified()));
 						}
-						
 						File rep = new File(args[5]);
 						List<Pair<String, Long>> files = isFile? single : getFiles(getFilesDir(rep));
 						Push psh =  new Push(rep.getName().contains(".")? rep.getParent() : rep.getName(), 
@@ -72,7 +71,14 @@ public class myGit {
 						//falta eliminar ficheiros que ja nao estejam no repositorio mas que estao no servidor
 						break;
 					case "-pull":
-						Pull pll = new Pull(args[5], !args[5].contains("."));
+						String[] s = args[5].split("/");
+						Pull pll;
+						if(s.length == 1){
+							pll = new Pull(args[0]+"/"+args[5], args[5],  !args[5].contains("."));
+						}
+						else{
+							pll = new Pull(args[5], args[5], !args[5].contains("."));
+						}
 						res = cs.sendReceivePull(pll, out, in);
 						break;
 					case "-share":

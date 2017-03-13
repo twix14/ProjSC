@@ -17,6 +17,9 @@ public class FileUtilities {
 		if(server){
 			version = (String) in.readObject();
 		}
+		else{
+			version = ".";
+		}
 		
 		
 		dim = in.readInt();
@@ -80,7 +83,7 @@ public class FileUtilities {
 	}
 	
 	public void uploadFile(ObjectInputStream in, ObjectOutputStream out, File file, String version) throws IOException, ClassNotFoundException{
-		out.writeObject((String) version); //so no cliente a rever
+		//out.writeObject((String) version); //so no cliente a rever
 		out.writeInt((int)file.length());
 				
 		FileInputStream fil =  new FileInputStream(file);

@@ -72,93 +72,94 @@ public class ServerStub {
 		for(File fl : files){
 			String version;
 			Pair<String, Long> file = fls.get(i);
-			if(!(version = f.sendReceiveCheckFile(in, out, file, pull.getRep())).equals("up-to-date"))
-				f.uploadFile(in, out, fl, version);
+			if(!(version = f.sendReceiveCheckFile(in, out, file, pull.getLocRep())).equals("up-to-date"))
+				if(!fl.getName().equals("share.txt"))
+					f.uploadFile(in, out, fl, version);
 			i++;
 		}
 		return null;
 	}
 
-		private List<Pair<String, Long>> getFiles(List<File> files){
-			List<Pair<String, Long>> result = new ArrayList<Pair<String, Long>>();
+	private List<Pair<String, Long>> getFiles(List<File> files){
+		List<Pair<String, Long>> result = new ArrayList<Pair<String, Long>>();
 
-			for(File fl : files)
-				result.add(new Pair<String, Long>(fl.getName(), fl.lastModified()));
+		for(File fl : files)
+			result.add(new Pair<String, Long>(fl.getName(), fl.lastModified()));
 
-			return result;
-		}
-
-		private List<File> getFilesDir(File rep){
-			List<File> result = new ArrayList<File>();
-			for(File fl : rep.listFiles())
-				result.add(fl);
-			return result;
-		}
-		public Result doShare(String pathDestiny, String userToShare) throws IOException{
-			BufferedReader reader = null;
-			reader = new BufferedReader(new FileReader(pathDestiny + "/" + "share.txt"));
-			String line;
-			boolean userE = false;
-			Result res = null;
-
-			while((line = reader.readLine()) != null){
-				userE = line.equals(userToShare);
-			}
-
-			reader.close();
-
-			if(!userE){
-				BufferedWriter writer = new BufferedWriter(new FileWriter(pathDestiny + "/" + "share.txt", true)); 
-				writer.write(userToShare);
-				writer.newLine();
-				writer.close();
-				res = new Result("All good", true);
-				return res; //a mudar para construtor!
-			}
-
-			return null;
-		}
-
-		public Result doRemove(String path, String user) throws IOException{
-
-			File inputFile = new File(path + "/" + "share.txt");
-			File tempFile = new File("myTempFile.txt");
-
-			BufferedReader reader = new BufferedReader(new FileReader(inputFile));
-			BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
-
-			String currentLine;
-
-			while((currentLine = reader.readLine()) != null) {
-				if(currentLine.equals(user)) continue;
-				writer.write(currentLine);
-				writer.newLine();
-			}
-			writer.close(); 
-			reader.close();
-			inputFile.delete();
-			tempFile.renameTo(inputFile);
-
-			return new Result("All good", true);
-		}
-
-		public boolean userPath(String string) throws IOException {
-			BufferedReader reader = null;
-
-			try {
-				reader = new BufferedReader(new FileReader("utilizadores.txt"));
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
-
-			String line;
-			while((line = reader.readLine()) != null){
-				String[] curr = line.split(" ");
-				if(string.equals(curr[0]))
-					return true;
-			}
-
-			return false;
-		}
-
+		return result;
 	}
+
+	private List<File> getFilesDir(File rep){
+		List<File> result = new ArrayList<File>();
+		for(File fl : rep.listFiles())
+			result.add(fl);
+		return result;
+	}
+	public Result doShare(String pathDestiny, String userToShare) throws IOException{
+		BufferedReader reader = null;
+		reader = new BufferedReader(new FileReader(pathDestiny + "/" + "share.txt"));
+		String line;
+		boolean userE = false;
+		Result res = null;
+
+		while((line = reader.readLine()) != null){
+			userE = line.equals(userToShare);
+		}
+
+		reader.close();
+
+		if(!userE){
+			BufferedWriter writer = new BufferedWriter(new FileWriter(pathDestiny + "/" + "share.txt", true)); 
+			writer.write(userToShare);
+			writer.newLine();
+			writer.close();
+			res = new Result("All good", true);
+			return res; //a mudar para construtor!
+		}
+
+		return null;
+	}
+
+	public Result doRemove(String path, String user) throws IOException{
+
+		File inputFile = new File(path + "/" + "share.txt");
+		File tempFile = new File("myTempFile.txt");
+
+		BufferedReader reader = new BufferedReader(new FileReader(inputFile));
+		BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile));
+
+		String currentLine;
+
+		while((currentLine = reader.readLine()) != null) {
+			if(currentLine.equals(user)) continue;
+			writer.write(currentLine);
+			writer.newLine();
+		}
+		writer.close(); 
+		reader.close();
+		inputFile.delete();
+		tempFile.renameTo(inputFile);
+
+		return new Result("All good", true);
+	}
+
+	public boolean userPath(String string) throws IOException {
+		BufferedReader reader = null;
+
+		try {
+			reader = new BufferedReader(new FileReader("utilizadores.txt"));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		String line;
+		while((line = reader.readLine()) != null){
+			String[] curr = line.split(" ");
+			if(string.equals(curr[0]))
+				return true;
+		}
+
+		return false;
+	}
+
+}
