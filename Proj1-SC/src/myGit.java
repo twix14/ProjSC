@@ -51,30 +51,40 @@ public class myGit {
 					if(user(args, out, in) == 1)
 						System.out.println("-- O utilizador " + args[0] + " foi criado");
 					out.writeBoolean(true); //indica que vai fazer operacao de pull,push...
+					
+					String[] split = args[5].split("/");
+					out.writeObject(split[0]);
+					boolean owner = (boolean)in.readObject();
 
 					switch (args[4]) {
 					case "-push":
-						boolean isFile = args[5].contains(".");
+						File rep = new File(args[5]);
 						List<File> singleFile = new ArrayList<File>();
 						List<Pair<String, Long>> single =  new ArrayList<Pair<String, Long>>();
 						
-						if(isFile){
+						if(!rep.isDirectory()){
 							singleFile.add(new File(args[5]));
 							single.add(new Pair<String, Long>(singleFile.get(0).getName(), singleFile.get(0).lastModified()));
 						}
-						File rep = new File(args[5]);
-						List<Pair<String, Long>> files = isFile? single : getFiles(getFilesDir(rep));
-						Push psh =  new Push(rep.getName().contains(".")? rep.getParent() : rep.getName(), 
-								!args[5].contains("."), files);
-						res = ClientStub.Instance.sendReceivePush(psh, out, in, isFile? singleFile : getFilesDir(rep), args[0]);
-						//falta eliminar ficheiros que ja nao estejam no repositorio mas que estao no servidor
+						File notUser = null;
+						
+						if(!owner)
+							notUser = getCorrectRep(args[5]);
+						
+						List<Pair<String, Long>> files = !rep.isDirectory()? single : !owner ? 
+								getFiles(getFilesDir(notUser)): getFiles(getFilesDir(rep));
+						
+						Push psh =  new Push(rep.isDirectory()? rep.toString() : rep.getParent(), 
+								rep.isDirectory(), files);
+						res = ClientStub.Instance.sendReceivePush(psh, out, in, !rep.isDirectory()? singleFile 
+								: !owner? getFilesDir(notUser) : getFilesDir(rep), args[0]);
 						
 						break;
 					case "-pull":
-						String[] s = args[5].split("/");
 						Pull pll;
-						if(s.length == 1){
-							pll = new Pull(args[0]+"/"+args[5], args[5],  !args[5].contains("."));
+						if(new File(args[5]).isDirectory()){
+							String[] s = args[5].split("/");
+							pll = new Pull(args[0]+ "/" +args[5], args[5],  !args[5].contains("."));
 						}
 						else{
 							pll = new Pull(args[5], args[5], !args[5].contains("."));
@@ -105,7 +115,20 @@ public class myGit {
 			}
 		}
 	}
-	
+
+	private File getCorrectRep(String string) {
+		StringBuilder sb = new StringBuilder();
+		String[] split = string.split("/");
+		
+		for(int i = 1; i < split.length; i++){
+			sb.append(split[i] + "\\");
+		}
+		
+		sb.deleteCharAt(sb.length()-1);
+		
+		return new File(sb.toString());
+	}
+
 	private List<Pair<String, Long>> getFiles(List<File> files){
 		List<Pair<String, Long>> result = new ArrayList<Pair<String, Long>>();
 		
@@ -151,8 +174,7 @@ public class myGit {
 	}
 
 	private static boolean makeRepositoryLocal(String name) {
-		File dir = new File(name);
-		return dir.mkdir();
+		return new File(name).mkdir();
 	}
 
 }

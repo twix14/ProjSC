@@ -62,32 +62,38 @@ public class myGitServer {
 				String passwd = (String)inStream.readObject();
 
 				outStream.writeObject(verificaUtilizador(user, passwd));
+				
+				
 
 				if(inStream.readBoolean()){ //true se tiver operacao pull,push...
-
+					String owner = (String)inStream.readObject();
+					boolean test = !FileUtilities.INSTANCE.userPath(owner);
+					outStream.writeObject(test); 
+					//verificar se o utilizador eh ou nao dono do repositorio que esta a tentar utilizar
+					
 					Object obj = inStream.readObject();
 					Result res = null;
 
 					switch (obj.getClass().getName()) {
 						case "Pull":
 							Pull pull = (Pull) obj;
-							res = ServerStub.Instance.doPull(pull, user, outStream, inStream);
+							res = ServerStub.INSTANCE.doPull(pull, user, outStream, inStream);
 							break;
 						case "Push":
 							Push push = (Push) obj;
-							res = ServerStub.Instance.doPush(push, user, outStream, inStream);
+							res = ServerStub.INSTANCE.doPush(push, user, outStream, inStream);
 							break;
 						case "Share":
 							Share share = (Share) obj;
-							if(ServerStub.Instance.userPath(share.getUserToShare())){
-								res = ServerStub.Instance.doShare(share);
+							if(FileUtilities.INSTANCE.userPath(share.getUserToShare())){
+								res = ServerStub.INSTANCE.doShare(share);
 							}else{
 								res = new Result("Erro: O utilizador " + share.getUserToShare() + " não existe", false);
 							}
 							break;
 						case "Remove":
 							Remove remove = (Remove) obj;
-							res = ServerStub.Instance.doRemove(remove.getPath(), remove.getUser());
+							res = ServerStub.INSTANCE.doRemove(remove.getPath(), remove.getUser());
 							break;
 						default:
 							res = new Result("", false);

@@ -9,17 +9,20 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public enum ServerStub {
-	Instance;
+	INSTANCE;
 	
 	public Result doPush(Push push, String user, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
 		File rep = null;
+		String[] path = push.getPath().split("\\\\");
+		boolean ok = true;
 
-		if(!userPath(push.getPath())){
+		if(!FileUtilities.INSTANCE.userPath(path[0])){
 			rep = new File(user + "/" + push.getPath());
-			//if()
+	
 			if(push.isDir()){
 				File f = new File(user);
 				File share = new File(user + "/" + push.getPath() + "/" + "share.txt");
@@ -34,27 +37,41 @@ public enum ServerStub {
 					//diretorio criado
 				}
 			}
+		} else {
+			ok = FileUtilities.INSTANCE.checkUserPermission(user, push.getPath());
+			rep = new File(push.getPath());
 		}
+		
+		if(ok) {
+			for(Pair<String, Long> file : push.getFiles()){
+				int pos = file.getSt().lastIndexOf(".");
+				String fileName = file.getSt().substring(0, pos);
+				String extension = file.getSt().substring(pos + 1);
+				
+				if(!FileUtilities.INSTANCE.checkFile(in, out)) //se o ficheiro nao estiver atualizado
+					FileUtilities.INSTANCE.downloadFile(in, out, rep + " " + fileName + " " +  extension, true);
+			}
 
-		for(Pair<String, Long> file : push.getFiles()){
-			String[] extension = file.getSt().split("\\.(?=[^\\.]+$)");
-			if(!FileUtilities.INSTANCE.checkFile(in, out)) //se o ficheiro nao estiver atualizado
-				FileUtilities.INSTANCE.downloadFile(in, out, rep + " " + extension[0] + " " +  extension[1], true);
-		}
-
-		for(File fl : rep.listFiles()){
-			String[] file = fl.getName().split("////");
-			if(!file[file.length-1].equals("share.txt")){
-				String[] nameFile = file[file.length-1].split("_v[\\d]+\\.");
-				boolean encontrou = false;
-				for(Pair<String, Long> fileClient : push.getFiles()){
-					String[] client = fileClient.getSt().split("\\.");
-					if(client[0].equals(nameFile[0]))
-						encontrou = true;
+			for(File fl : rep.listFiles()){
+				if(!fl.getName().equals("share.txt") && !fl.getName().contains("_deleted")){
+					String[] nameFile = fl.getName().split("_v[\\d]+\\.");
+					File[] files = FileUtilities
+							.INSTANCE.getNewestVersion(rep, nameFile[0], nameFile[1]);
+					if(fl.equals(files[files.length-1])){
+						boolean encontrou = false;
+						
+						for(Pair<String, Long> fileClient : push.getFiles()){
+							int pos = fileClient.getSt().lastIndexOf(".");
+							if(fileClient.getSt().substring(0, pos).equals(nameFile[0]))
+								encontrou = true;
+						}
+						if(!encontrou){
+							System.out.println(rep.getPath());
+							fl.renameTo(new File(rep.getPath() + "\\" + nameFile[0] + "_deleted." + nameFile[1]));
+						}
+					}	
 				}
-				if(!encontrou)
-					System.out.println(fl.delete()? "apagou " + file[file.length-1] : "");
-			}	
+			}
 		}
 
 		return null;
@@ -95,8 +112,16 @@ public enum ServerStub {
 		return result;
 	}
 	public Result doShare(Share share) throws IOException{
-		BufferedReader reader = null;
-		reader = new BufferedReader(new FileReader(share.pathDestiny() + "/" + "share.txt"));
+		File shr = new File(share.pathDestiny() + "/" + "share.txt");
+		
+		if(!shr.exists()){
+			File dir = new File(share.pathDestiny());
+			dir.mkdirs();
+			shr.createNewFile();
+		}
+		
+		BufferedReader reader = new BufferedReader(new FileReader(share.pathDestiny() + "/" + "share.txt"));
+		
 		String line;
 		boolean userE = false;
 
@@ -140,25 +165,6 @@ public enum ServerStub {
 		
 		String[] s = path.split("/");
 		return new Result("-- O utilizador " + user + " foi removido do repositório " + s[1], true);
-	}
-
-	public boolean userPath(String string) throws IOException {
-		BufferedReader reader = null;
-
-		try {
-			reader = new BufferedReader(new FileReader("utilizadores.txt"));
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-
-		String line;
-		while((line = reader.readLine()) != null){
-			String[] curr = line.split(" ");
-			if(string.equals(curr[0]))
-				return true;
-		}
-
-		return false;
 	}
 
 }

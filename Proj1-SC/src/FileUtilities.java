@@ -1,7 +1,10 @@
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -74,7 +77,7 @@ public enum FileUtilities {
 		} else return "up-to-date";
 	}
 
-	private File[] getNewestVersion(File dir, String nameF, String extension) {
+	public File[] getNewestVersion(File dir, String nameF, String extension) {
 		return dir.listFiles(new FilenameFilter(){
 			public boolean accept(File dir, String name)
 			{	
@@ -101,6 +104,39 @@ public enum FileUtilities {
 			out.flush();
 		}
 		fis.close();
+	}
+
+	public boolean checkUserPermission(String userToCheck, String path) throws IOException {
+		BufferedReader reader = new BufferedReader(new FileReader(path + "/" + "share.txt"));
+		String line = null;
+		
+		while((line = reader.readLine()) != null){
+			if(line.equals(userToCheck))
+				return true;
+		}
+		
+		reader.close();
+		
+		return false;
+	}
+	
+	public boolean userPath(String string) throws IOException {
+		BufferedReader reader = null;
+
+		try {
+			reader = new BufferedReader(new FileReader("utilizadores.txt"));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		String line;
+		while((line = reader.readLine()) != null){
+			String[] curr = line.split(" ");
+			if(string.equals(curr[0]))
+				return true;
+		}
+
+		return false;
 	}
 
 }
