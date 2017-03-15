@@ -31,33 +31,46 @@ public enum ClientStub {
 
 		Pull pll2 = (Pull) in.readObject();
 
+		Result res = new Result("", true);
+		StringBuilder sb = new StringBuilder();
 		if(!pll2.isFile()){
 			String[] myrep = pll2.getRep().split("/");
 			for(Pair<String, Long> file : pll2.getFiles()){
 				String[] extension = file.getSt().split("_v[\\d]+\\.");
-				if(!FileUtilities.INSTANCE.checkFile(in, out)) //se o ficheiro nao estiver atualizado
+				if(!FileUtilities.INSTANCE.checkFile(in, out)){ //se o ficheiro nao estiver atualizado
 						FileUtilities.INSTANCE.downloadFile(in, out, pll2.getLocRep() + " " + extension[0] + " " +  extension[1], false);
+						sb.append("-- O ficheiro "+ extension[0] + "."+ extension[1] +" foi copiado do servidor \n");
+				}
 			}
-
+			
 			List<File> files = getFilesDir(new File(myrep[1]));
 			List<String> filesServ = getFilesServ(pll2.getFiles());
 			List<String> removed = getFileRem(files, filesServ);
 
+			res = (Result) in.readObject();
 			if(removed.size() == 1){
-				System.out.println("-- O ficheiro " + removed.get(0) +" existe localmente mas foi eliminado no servidor");
+				res.setS("-- O ficheiro " + removed.get(0) +" existe localmente mas foi eliminado no servidor");
+				//System.out.println("-- O ficheiro " + removed.get(0) +" existe localmente mas foi eliminado no servidor");
 			}
 			else if(removed.size() > 1){
-				System.out.print("-- Os ficheiros " + removed.get(0) + ", ");
+				sb.append("-- Os ficheiros " + removed.get(0) + ", ");
+				//System.out.print("-- Os ficheiros " + removed.get(0) + ", ");
 				for(int i = 1; i < removed.size() -1; i++)
-					System.out.print(removed.get(i) + ", ");
-				System.out.println(removed.get(removed.size()-1) + " existem localmente mas foram eliminados no servidor");
+					sb.append(removed.get(i) + ", ");
+					//System.out.print(removed.get(i) + ", ");
+				sb.append(removed.get(removed.size()-1) + " existem localmente mas foram eliminados no servidor");
+				//System.out.println(removed.get(removed.size()-1) + " existem localmente mas foram eliminados no servidor");
 			}
 		}
 		else{
-			if(!FileUtilities.INSTANCE.checkFile(in, out))
+			res = (Result) in.readObject();
+			if(!FileUtilities.INSTANCE.checkFile(in, out)){
 				FileUtilities.INSTANCE.downloadFile(in, out, pll2.getLocRep(), false);
+			}
+			
 		}
-		return (Result) in.readObject();
+		res.setS(sb.toString());
+		return res;
 	}
 
 	private List<String> getFilesServ(List<Pair<String, Long>> files) {

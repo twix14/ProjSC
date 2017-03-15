@@ -16,7 +16,8 @@ public enum ServerStub {
 		File rep = null;
 		String[] path = push.getPath().split("\\\\");
 		boolean ok = true;
-
+		Result res = new Result("", false);
+		
 		if(!FileUtilities.INSTANCE.userPath(path[0])){
 			rep = new File(user + "/" + push.getPath());
 
@@ -31,6 +32,8 @@ public enum ServerStub {
 				if(!rep.exists()){
 					rep.mkdir();
 					share.createNewFile();
+					res.setCreated();
+					res.setS("-- O repositório "+ rep.getName() +" foi criado no servidor \n");
 					//diretorio criado
 				}
 			}
@@ -48,7 +51,8 @@ public enum ServerStub {
 				if(!FileUtilities.INSTANCE.checkFile(in, out)) //se o ficheiro nao estiver atualizado
 					FileUtilities.INSTANCE.downloadFile(in, out, rep + " " + fileName + " " +  extension, true);
 			}
-
+			StringBuilder sb = new StringBuilder();
+			ArrayList<String> removed = new ArrayList<String>();
 			for(File fl : rep.listFiles()){
 				if(!fl.getName().equals("share.txt") && !fl.getName().contains("_deleted")){
 					String[] nameFile = fl.getName().split("_v[\\d]+\\.");
@@ -59,19 +63,31 @@ public enum ServerStub {
 
 						for(Pair<String, Long> fileClient : push.getFiles()){
 							int pos = fileClient.getSt().lastIndexOf(".");
-							if(fileClient.getSt().substring(0, pos).equals(nameFile[0]))
+							if(fileClient.getSt().substring(0, pos).equals(nameFile[0])){
 								encontrou = true;
+								sb.append("-- O ficheiro " + fileClient.getSt() + " foi enviado para o servidor \n");
+							}
 						}
 						if(!encontrou){
 							System.out.println(rep.getPath());
+							removed.add(fl.getName());
 							fl.renameTo(new File(rep.getPath() + "\\" + nameFile[0] + "_deleted." + nameFile[1]));
 						}
 					}	
 				}
 			}
+			if(removed.size() == 1){
+				sb.append("-- O ficheiro "+ removed.get(0) +" vai ser eliminado no servidor");
+			}
+			else if(removed.size() >1){
+				sb.append("Os ficheiros ");
+				for(int i = 0; i < removed.size()-1; i++)
+					sb.append(removed.get(i) + ", ");
+				sb.append(removed.get(removed.size()-1)+ " vão ser eliminados no servidor");
+			}
+			res.setS(sb.toString());
 		}
-
-		return null;
+		return res;
 	}
 
 	public Result doPull(Pull pull, String user, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{

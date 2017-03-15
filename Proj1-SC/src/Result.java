@@ -20,7 +20,7 @@ public class Result implements Serializable{
 		this.created = true;
 	}
 	public void setS(String s){
-		this.s = s; 
+		this.s = this.s + s; 
 	}
 	
 
