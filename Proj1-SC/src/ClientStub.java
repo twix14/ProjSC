@@ -18,7 +18,7 @@ public enum ClientStub {
 			String version;
 			Pair<String, Long> file = fls.get(i);
 			if(!(version = FileUtilities.INSTANCE.sendReceiveCheckFile(in, out, file, user + "/" + psh.getPath())).equals("up-to-date"))
-				FileUtilities.INSTANCE.uploadFile(in, out, fl, version);
+				FileUtilities.INSTANCE.uploadFile(in, out, fl, version, false);
 			i++;
 		}
 
@@ -31,12 +31,11 @@ public enum ClientStub {
 
 		Pull pll2 = (Pull) in.readObject();
 
-		if(pll2.isDir()){
+		if(!pll2.isFile()){
 			String[] myrep = pll2.getRep().split("/");
 			for(Pair<String, Long> file : pll2.getFiles()){
-				String[] extension = file.getSt().split("\\.(?=[^\\.]+$)");
+				String[] extension = file.getSt().split("_v[\\d]+\\.");
 				if(!FileUtilities.INSTANCE.checkFile(in, out)) //se o ficheiro nao estiver atualizado
-					if(!file.getSt().equals("share.txt"))
 						FileUtilities.INSTANCE.downloadFile(in, out, pll2.getLocRep() + " " + extension[0] + " " +  extension[1], false);
 			}
 
@@ -44,8 +43,9 @@ public enum ClientStub {
 			List<String> filesServ = getFilesServ(pll2.getFiles());
 			List<String> removed = getFileRem(files, filesServ);
 
-			if(removed.size() == 1)
-				System.out.println("-- O ficheiro" + removed.get(0) +"existe localmente mas foi eliminado no servidor");
+			if(removed.size() == 1){
+				System.out.println("-- O ficheiro " + removed.get(0) +" existe localmente mas foi eliminado no servidor");
+			}
 			else if(removed.size() > 1){
 				System.out.print("-- Os ficheiros " + removed.get(0) + ", ");
 				for(int i = 1; i < removed.size() -1; i++)
@@ -54,7 +54,8 @@ public enum ClientStub {
 			}
 		}
 		else{
-			FileUtilities.INSTANCE.downloadFile(in, out, pll2.getLocRep(), false);
+			if(!FileUtilities.INSTANCE.checkFile(in, out))
+				FileUtilities.INSTANCE.downloadFile(in, out, pll2.getLocRep(), false);
 		}
 		return (Result) in.readObject();
 	}
@@ -69,7 +70,7 @@ public enum ClientStub {
 	private List<String> getFileRem(List<File> files, List<String> filesServ) {
 		List<String> result = new ArrayList<String>();
 		for(File file : files){
-			if(!filesServ.contains(file.getName()))
+			if(file.getName().contains("_deleted"))
 				result.add(file.getName());
 		}
 		return result;

@@ -1,20 +1,17 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public enum ServerStub {
 	INSTANCE;
-	
+
 	public Result doPush(Push push, String user, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
 		File rep = null;
 		String[] path = push.getPath().split("\\\\");
@@ -22,7 +19,7 @@ public enum ServerStub {
 
 		if(!FileUtilities.INSTANCE.userPath(path[0])){
 			rep = new File(user + "/" + push.getPath());
-	
+
 			if(push.isDir()){
 				File f = new File(user);
 				File share = new File(user + "/" + push.getPath() + "/" + "share.txt");
@@ -41,13 +38,13 @@ public enum ServerStub {
 			ok = FileUtilities.INSTANCE.checkUserPermission(user, push.getPath());
 			rep = new File(push.getPath());
 		}
-		
+
 		if(ok) {
 			for(Pair<String, Long> file : push.getFiles()){
 				int pos = file.getSt().lastIndexOf(".");
 				String fileName = file.getSt().substring(0, pos);
 				String extension = file.getSt().substring(pos + 1);
-				
+
 				if(!FileUtilities.INSTANCE.checkFile(in, out)) //se o ficheiro nao estiver atualizado
 					FileUtilities.INSTANCE.downloadFile(in, out, rep + " " + fileName + " " +  extension, true);
 			}
@@ -59,7 +56,7 @@ public enum ServerStub {
 							.INSTANCE.getNewestVersion(rep, nameFile[0], nameFile[1]);
 					if(fl.equals(files[files.length-1])){
 						boolean encontrou = false;
-						
+
 						for(Pair<String, Long> fileClient : push.getFiles()){
 							int pos = fileClient.getSt().lastIndexOf(".");
 							if(fileClient.getSt().substring(0, pos).equals(nameFile[0]))
@@ -78,20 +75,30 @@ public enum ServerStub {
 	}
 
 	public Result doPull(Pull pull, String user, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
-		List <File> files = getFilesDir(new File(pull.getRep()));
-		pull.addFiles(getFiles(files));
-		out.writeObject(pull);
+		if(pull.isFile()){
+			File singleFile = new File(pull.getRep());
+			List<Pair<String, Long>> single =  new ArrayList<Pair<String, Long>>();
+			pull.addFiles(single);
+			out.writeObject(pull);
+			single.add(new Pair<String,Long>(singleFile.getName(), singleFile.lastModified()));
 
-		int i = 0;
-		List<Pair<String, Long>> fls = pull.getFiles();
+			if(!(FileUtilities.INSTANCE.sendReceiveCheckFile(in, out, single.get(0), pull.getLocRep())).equals("up-to-date"))
+				FileUtilities.INSTANCE.uploadFile(in, out, singleFile, "", true);
+		}
+		else{
+			List <File> files = getFilesDir(new File(pull.getRep()));
+			pull.addFiles(getFiles(files));
+			out.writeObject(pull);
 
-		for(File fl : files){
-			String version;
-			Pair<String, Long> file = fls.get(i);
-			if(!(version = FileUtilities.INSTANCE.sendReceiveCheckFile(in, out, file, pull.getLocRep())).equals("up-to-date"))
-				if(!fl.getName().equals("share.txt"))
-					FileUtilities.INSTANCE.uploadFile(in, out, fl, version);
-			i++;
+			int i = 0;
+			List<Pair<String, Long>> fls = pull.getFiles();
+
+			for(File fl : files){
+				Pair<String, Long> file = fls.get(i);
+				if(!(FileUtilities.INSTANCE.sendReceiveCheckFile(in, out, file, pull.getLocRep())).equals("up-to-date"))
+						FileUtilities.INSTANCE.uploadFile(in, out, fl, "", true);
+				i++;
+			}
 		}
 		return new Result("", true);
 	}
@@ -107,21 +114,28 @@ public enum ServerStub {
 
 	private List<File> getFilesDir(File rep){
 		List<File> result = new ArrayList<File>();
-		for(File fl : rep.listFiles())
-			result.add(fl);
+		for(File fl : rep.listFiles()){
+			if(!fl.getName().equals("share.txt")){
+				String[] s = fl.getName().split("_v[\\d]+\\.");
+				File[] versions = FileUtilities.INSTANCE.getNewestVersion(rep, s[0], s[1]);
+				if(fl.getName().equals(versions[versions.length-1].getName())){
+					result.add(fl);
+				}
+			}
+		}
 		return result;
 	}
 	public Result doShare(Share share) throws IOException{
 		File shr = new File(share.pathDestiny() + "/" + "share.txt");
-		
+
 		if(!shr.exists()){
 			File dir = new File(share.pathDestiny());
 			dir.mkdirs();
 			shr.createNewFile();
 		}
-		
+
 		BufferedReader reader = new BufferedReader(new FileReader(share.pathDestiny() + "/" + "share.txt"));
-		
+
 		String line;
 		boolean userE = false;
 
@@ -162,7 +176,7 @@ public enum ServerStub {
 		reader.close();
 		inputFile.delete();
 		tempFile.renameTo(inputFile);
-		
+
 		String[] s = path.split("/");
 		return new Result("-- O utilizador " + user + " foi removido do repositório " + s[1], true);
 	}

@@ -2,7 +2,6 @@ import java.io.Serializable;
 
 public class Remove implements Serializable{
 	
-	private String masterUser;
 	private final String user;
 	private final String path;
 
@@ -11,7 +10,6 @@ public class Remove implements Serializable{
 	public Remove(String rep, String user, String masterUser) {
 		this.user = user;
 		this.path = masterUser + "/" + rep;
-		this.masterUser = masterUser;
 		
 	}
 	

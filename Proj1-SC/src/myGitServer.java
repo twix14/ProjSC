@@ -36,6 +36,7 @@ public class myGitServer {
 				ServerThread newServerThread = new ServerThread(inSoc);
 				newServerThread.start();
 			}
+			
 			catch (IOException e) {
 				e.printStackTrace();
 			}
