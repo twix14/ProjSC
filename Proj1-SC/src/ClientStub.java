@@ -36,13 +36,17 @@ public enum ClientStub {
 		if(!pll2.isFile()){
 			String[] myrep = pll2.getRep().split("/");
 			for(Pair<String, Long> file : pll2.getFiles()){
-				String[] extension = file.getSt().split("_v[\\d]+\\.");
+				String[] extension;
+				if(file.getSt().contains("_deleted"))
+					extension = file.getSt().split("_deleted+\\.");
+				else
+					extension = file.getSt().split("_v[\\d]+\\.");
 				if(!FileUtilities.INSTANCE.checkFile(in, out)){ //se o ficheiro nao estiver atualizado
-						FileUtilities.INSTANCE.downloadFile(in, out, pll2.getLocRep() + " " + extension[0] + " " +  extension[1], false);
-						sb.append("-- O ficheiro "+ extension[0] + "."+ extension[1] +" foi copiado do servidor \n");
+					FileUtilities.INSTANCE.downloadFile(in, out, pll2.getLocRep() + " " + extension[0] + " " +  extension[1], false);
+					sb.append("-- O ficheiro "+ extension[0] + "."+ extension[1] +" foi copiado do servidor \n");
 				}
 			}
-			
+
 			List<File> files = getFilesDir(new File(myrep[1]));
 			List<String> filesServ = getFilesServ(pll2.getFiles());
 			List<String> removed = getFileRem(files, filesServ);
@@ -57,7 +61,7 @@ public enum ClientStub {
 				//System.out.print("-- Os ficheiros " + removed.get(0) + ", ");
 				for(int i = 1; i < removed.size() -1; i++)
 					sb.append(removed.get(i) + ", ");
-					//System.out.print(removed.get(i) + ", ");
+				//System.out.print(removed.get(i) + ", ");
 				sb.append(removed.get(removed.size()-1) + " existem localmente mas foram eliminados no servidor");
 				//System.out.println(removed.get(removed.size()-1) + " existem localmente mas foram eliminados no servidor");
 			}
@@ -67,7 +71,7 @@ public enum ClientStub {
 			if(!FileUtilities.INSTANCE.checkFile(in, out)){
 				FileUtilities.INSTANCE.downloadFile(in, out, pll2.getLocRep(), false);
 			}
-			
+
 		}
 		res.setS(sb.toString());
 		return res;

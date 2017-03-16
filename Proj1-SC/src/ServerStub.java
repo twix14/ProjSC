@@ -132,7 +132,11 @@ public enum ServerStub {
 		List<File> result = new ArrayList<File>();
 		for(File fl : rep.listFiles()){
 			if(!fl.getName().equals("share.txt")){
-				String[] s = fl.getName().split("_v[\\d]+\\.");
+				String[] s;
+				if(fl.getName().contains("_deleted"))
+					s = fl.getName().split("_deleted+\\.");
+				else
+					s = fl.getName().split("_v[\\d]+\\.");
 				File[] versions = FileUtilities.INSTANCE.getNewestVersion(rep, s[0], s[1]);
 				if(fl.getName().equals(versions[versions.length-1].getName())){
 					result.add(fl);
