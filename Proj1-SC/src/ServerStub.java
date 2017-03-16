@@ -17,7 +17,7 @@ public enum ServerStub {
 		String[] path = push.getPath().split("\\\\");
 		boolean ok = true;
 		Result res = new Result("", false);
-		
+
 		if(!FileUtilities.INSTANCE.userPath(path[0])){
 			rep = new File(user + "/" + push.getPath());
 
@@ -92,14 +92,24 @@ public enum ServerStub {
 
 	public Result doPull(Pull pull, String user, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
 		if(pull.isFile()){
-			File singleFile = new File(pull.getRep());
+			
+			String[] s = pull.getRep().split("/");
+			String f = s[s.length-1];
+			String[] file = f.split("\\."); 
+			StringBuilder sb = new StringBuilder();
+			for(int i = 0; i < s.length-1; i++)
+				 sb.append(s[i]+ "/");
+			sb.deleteCharAt(sb.length()-1);
+			String r = sb.toString();
+			File rep = new File(r);
+			File[] versions = FileUtilities.INSTANCE.getNewestVersion(rep, file[0], file[1]);
 			List<Pair<String, Long>> single =  new ArrayList<Pair<String, Long>>();
+			single.add(new Pair<String,Long>(versions[versions.length-1].getName(), versions[versions.length-1].lastModified()));
 			pull.addFiles(single);
 			out.writeObject(pull);
-			single.add(new Pair<String,Long>(singleFile.getName(), singleFile.lastModified()));
 
 			if(!(FileUtilities.INSTANCE.sendReceiveCheckFile(in, out, single.get(0), pull.getLocRep())).equals("up-to-date"))
-				FileUtilities.INSTANCE.uploadFile(in, out, singleFile, "", true);
+				FileUtilities.INSTANCE.uploadFile(in, out, versions[versions.length-1], "", true);
 		}
 		else{
 			List <File> files = getFilesDir(new File(pull.getRep()));
@@ -111,7 +121,8 @@ public enum ServerStub {
 
 			for(File fl : files){
 				Pair<String, Long> file = fls.get(i);
-				if(!(FileUtilities.INSTANCE.sendReceiveCheckFile(in, out, file, pull.getLocRep())).equals("up-to-date"))
+				if(!file.getSt().contains("_deleted"))
+					if(!(FileUtilities.INSTANCE.sendReceiveCheckFile(in, out, file, pull.getLocRep())).equals("up-to-date"))
 						FileUtilities.INSTANCE.uploadFile(in, out, fl, "", true);
 				i++;
 			}
@@ -121,7 +132,6 @@ public enum ServerStub {
 
 	private List<Pair<String, Long>> getFiles(List<File> files){
 		List<Pair<String, Long>> result = new ArrayList<Pair<String, Long>>();
-
 		for(File fl : files)
 			result.add(new Pair<String, Long>(fl.getName(), fl.lastModified()));
 

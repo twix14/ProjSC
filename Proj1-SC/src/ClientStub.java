@@ -33,27 +33,28 @@ public enum ClientStub {
 
 		Result res = new Result("", true);
 		StringBuilder sb = new StringBuilder();
+		List<String> removed = new ArrayList<String>();
 		if(!pll2.isFile()){
-			String[] myrep = pll2.getRep().split("/");
 			for(Pair<String, Long> file : pll2.getFiles()){
 				String[] extension;
-				if(file.getSt().contains("_deleted"))
+				if(file.getSt().contains("_deleted")){
 					extension = file.getSt().split("_deleted+\\.");
-				else
+					removed.add(extension[0]+"."+ extension[1]);
+				}
+				else{
 					extension = file.getSt().split("_v[\\d]+\\.");
-				if(!FileUtilities.INSTANCE.checkFile(in, out)){ //se o ficheiro nao estiver atualizado
-					FileUtilities.INSTANCE.downloadFile(in, out, pll2.getLocRep() + " " + extension[0] + " " +  extension[1], false);
-					sb.append("-- O ficheiro "+ extension[0] + "."+ extension[1] +" foi copiado do servidor \n");
+					if(!FileUtilities.INSTANCE.checkFile(in, out)){ //se o ficheiro nao estiver atualizado
+						FileUtilities.INSTANCE.downloadFile(in, out, pll2.getLocRep() + " " + extension[0] + " " +  extension[1], false);
+						sb.append("-- O ficheiro "+ extension[0] + "."+ extension[1] +" foi copiado do servidor \n");
+					}
 				}
 			}
 
-			List<File> files = getFilesDir(new File(myrep[1]));
-			List<String> filesServ = getFilesServ(pll2.getFiles());
-			List<String> removed = getFileRem(files, filesServ);
+
 
 			res = (Result) in.readObject();
 			if(removed.size() == 1){
-				res.setS("-- O ficheiro " + removed.get(0) +" existe localmente mas foi eliminado no servidor");
+				res.setS("-- O ficheiro " + removed.get(0) +" existe localmente mas foi eliminado no servidor \n");
 				//System.out.println("-- O ficheiro " + removed.get(0) +" existe localmente mas foi eliminado no servidor");
 			}
 			else if(removed.size() > 1){
@@ -62,44 +63,32 @@ public enum ClientStub {
 				for(int i = 1; i < removed.size() -1; i++)
 					sb.append(removed.get(i) + ", ");
 				//System.out.print(removed.get(i) + ", ");
-				sb.append(removed.get(removed.size()-1) + " existem localmente mas foram eliminados no servidor");
+				sb.append(removed.get(removed.size()-1) + " existem localmente mas foram eliminados no servidor \n");
 				//System.out.println(removed.get(removed.size()-1) + " existem localmente mas foram eliminados no servidor");
+				res.setS(sb.toString());
+			}
+			else{
+				res.setS(sb.toString());
 			}
 		}
 		else{
-			res = (Result) in.readObject();
-			if(!FileUtilities.INSTANCE.checkFile(in, out)){
-				FileUtilities.INSTANCE.downloadFile(in, out, pll2.getLocRep(), false);
+			String[] extension = pll2.getFiles().get(0).getSt().split("_v[\\d]+\\.");
+			String[] s = pll2.getLocRep().split("/");
+			StringBuilder sb1 = new StringBuilder();
+			for(int i = 0; i < s.length-1; i++)
+				 sb1.append(s[i]+ "/");
+			String r = sb1.toString();
+			if(!FileUtilities.INSTANCE.checkFile(in, out)){ //se o ficheiro nao estiver atualizado
+				FileUtilities.INSTANCE.downloadFile(in, out,r + " " + extension[0] + " " +  extension[1], false);
+				sb.append("-- O ficheiro "+ extension[0] + "."+ extension[1] +" foi copiado do servidor \n");
 			}
-
+			res = (Result) in.readObject();
 		}
 		res.setS(sb.toString());
 		return res;
 	}
 
-	private List<String> getFilesServ(List<Pair<String, Long>> files) {
-		List<String> result = new ArrayList<String>();
-		for(Pair<String, Long> file: files)
-			result.add(file.getSt());
-		return result;
-	}
-
-	private List<String> getFileRem(List<File> files, List<String> filesServ) {
-		List<String> result = new ArrayList<String>();
-		for(File file : files){
-			if(file.getName().contains("_deleted"))
-				result.add(file.getName());
-		}
-		return result;
-	}
-
-	private List<File> getFilesDir(File rep){
-		List<File> result = new ArrayList<File>();
-		for(File fl : rep.listFiles())
-			result.add(fl); 
-		return result;
-	}
-
+	
 	// Envia os dados de um remove de permissoes de um repositorio partilhado para o servidor
 	public Result sendReceiveRemove(Remove rm, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
 		out.writeObject(rm);
