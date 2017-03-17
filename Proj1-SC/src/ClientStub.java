@@ -82,9 +82,8 @@ public enum ClientStub {
 				FileUtilities.INSTANCE.downloadFile(in, out,r + " " + extension[0] + " " +  extension[1], false);
 				sb.append("-- O ficheiro "+ extension[0] + "."+ extension[1] +" foi copiado do servidor \n");
 			}
-			res = (Result) in.readObject();
+			res.setS(sb.toString());
 		}
-		res.setS(sb.toString());
 		return res;
 	}
 
