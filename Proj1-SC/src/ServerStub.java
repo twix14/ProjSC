@@ -94,14 +94,15 @@ public enum ServerStub {
 	}
 
 	public Result doPull(Pull pull, String user, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
+		out.writeBoolean(FileUtilities.INSTANCE.checkUserPermission(user, pull.getRep()));
 		if(pull.isFile()){
-			
+
 			String[] s = pull.getRep().split("/");
 			String f = s[s.length-1];
 			String[] file = f.split("\\."); 
 			StringBuilder sb = new StringBuilder();
 			for(int i = 0; i < s.length-1; i++)
-				 sb.append(s[i]+ "/");
+				sb.append(s[i]+ "/");
 			sb.deleteCharAt(sb.length()-1);
 			String r = sb.toString();
 			File rep = new File(r);
