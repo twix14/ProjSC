@@ -10,6 +10,8 @@ public enum ClientStub {
 	//Envia os dados de um push para um repositorio para o servidor
 	public Result sendReceivePush(Push psh, ObjectOutputStream out, ObjectInputStream in, List<File> files, String user) throws IOException, ClassNotFoundException {
 		out.writeObject(psh);
+		if(!in.readBoolean())
+			return (Result) in.readObject();
 
 		int i = 0;
 		List<Pair<String, Long>> fls = psh.getFiles();
@@ -27,9 +29,9 @@ public enum ClientStub {
 
 	//Envia os dados de um pull de um repositorio para o servidor
 	public Result sendReceivePull(Pull pll, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException {
+		out.writeObject(pll);
 		if(!in.readBoolean())
 			return new Result("Erro, o utilizador nao tem permissao", false);
-		out.writeObject(pll);
 
 		Pull pll2 = (Pull) in.readObject();
 

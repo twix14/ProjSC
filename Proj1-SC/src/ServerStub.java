@@ -13,6 +13,10 @@ public enum ServerStub {
 	INSTANCE;
 
 	public Result doPush(Push push, String user, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
+		boolean b = FileUtilities.INSTANCE.checkUserPermission(user, push.getPath());
+		out.writeBoolean(b);
+		if(!b)
+			return new Result("O utilizador não tem permissão para fazer push", false);
 		File rep = null;
 		String[] path = push.getPath().split("\\\\");
 		boolean ok = true;
@@ -87,9 +91,7 @@ public enum ServerStub {
 			}
 			res.setS(sb.toString());
 		}
-		else{
-			res.setS("Erro: O utilizador" + user + "não tem permissão para aceder a este repositório"); 
-		}
+
 		return res;
 	}
 
