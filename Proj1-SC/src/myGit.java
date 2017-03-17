@@ -82,14 +82,14 @@ public class myGit {
 						break;
 					case "-pull":
 						Pull pll;
-						String[] s = args[5].split("/");
-						File f = new File(s[0]);
-						f.mkdir();
-						new File(s[0] + "\\" + s[1]).mkdir();
 						if(owner){
 							pll = new Pull(args[0]+ "/" +args[5], args[5],  !new File(args[5]).isDirectory());
 						}
 						else{
+							String[] s = args[5].split("/");
+							File f = new File(s[0]);
+							f.mkdir();
+							new File(s[0] + "\\" + s[1]).mkdir();
 							pll = new Pull(args[5], args[5], !new File(args[5]).isDirectory());
 						}
 						res = ClientStub.Instance.sendReceivePull(pll, out, in);

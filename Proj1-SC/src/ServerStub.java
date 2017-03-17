@@ -12,9 +12,16 @@ import java.util.List;
 public enum ServerStub {
 	INSTANCE;
 
-	public Result doPush(Push push, String user, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
-		boolean b = FileUtilities.INSTANCE.checkUserPermission(user, push.getPath());
-		out.writeBoolean(b);
+	public Result doPush(Push push, String user, ObjectOutputStream out, ObjectInputStream in, boolean owner) throws IOException, ClassNotFoundException{
+		boolean b;
+		if(owner){
+			b = true;
+		}
+		else{
+			b = FileUtilities.INSTANCE.checkUserPermission(user, push.getPath());
+			out.writeBoolean(b);
+		}
+
 		if(!b)
 			return new Result("O utilizador não tem permissão para fazer push", false);
 		File rep = null;
@@ -95,8 +102,11 @@ public enum ServerStub {
 		return res;
 	}
 
-	public Result doPull(Pull pull, String user, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
-		out.writeBoolean(FileUtilities.INSTANCE.checkUserPermission(user, pull.getRep()));
+	public Result doPull(Pull pull, String user, ObjectOutputStream out, ObjectInputStream in, boolean owner) throws IOException, ClassNotFoundException{
+		if(owner)
+			out.writeBoolean(true);
+		else
+			out.writeBoolean(FileUtilities.INSTANCE.checkUserPermission(user, pull.getRep()));
 		if(pull.isFile()){
 
 			String[] s = pull.getRep().split("/");

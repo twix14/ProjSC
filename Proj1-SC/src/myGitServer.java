@@ -78,11 +78,11 @@ public class myGitServer {
 					switch (obj.getClass().getName()) {
 						case "Pull":
 							Pull pull = (Pull) obj;
-							res = ServerStub.INSTANCE.doPull(pull, user, outStream, inStream);
+							res = ServerStub.INSTANCE.doPull(pull, user, outStream, inStream, test);
 							break;
 						case "Push":
 							Push push = (Push) obj;
-							res = ServerStub.INSTANCE.doPush(push, user, outStream, inStream);
+							res = ServerStub.INSTANCE.doPush(push, user, outStream, inStream, test);
 							break;
 						case "Share":
 							Share share = (Share) obj;
