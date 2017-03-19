@@ -20,7 +20,9 @@ public class myGit {
 
 		if(args[0].equals("-init")){
 			if(makeRepositoryLocal(args[1]))
-				System.out.print("-- O repositório " + args[1] + " foi criado localmente");
+				res = new Result("-- O repositório " + args[1] + " foi criado localmente", true);
+			else
+				res = new Result("-- Ocorreu um erro na criação do repositório", false);
 		} else {
 
 			try {
@@ -101,9 +103,9 @@ public class myGit {
 								res = ClientStub.Instance.sendReceivePull(pll, out, in);
 							}
 							else
-								res = new Result("sem permissao", false);
+								res = new Result("O utilizador " + args[0] + " não tem permissao de acesso ao repositorio", false);
 						}
-						
+
 						break;
 					case "-share":
 						Share shr = new Share(args[6], args[0], args[5]);

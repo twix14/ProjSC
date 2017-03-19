@@ -98,6 +98,9 @@ public enum ServerStub {
 			}
 			res.setS(sb.toString());
 		}
+		else{
+			res.setS("O utilizador " + user + " não tem permissao de acesso ao repositorio");
+		}
 
 		return res;
 	}
