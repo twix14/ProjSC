@@ -51,7 +51,7 @@ public class myGit {
 					if(user(args, out, in) == 1)
 						System.out.println("-- O utilizador " + args[0] + " foi criado");
 					out.writeBoolean(true); //indica que vai fazer operacao de pull,push...
-					
+
 					String[] split = args[5].split("/");
 					out.writeObject(split[0]);
 					boolean owner = (boolean)in.readObject();
@@ -61,38 +61,49 @@ public class myGit {
 						File rep = new File(args[5]);
 						List<File> singleFile = new ArrayList<File>();
 						List<Pair<String, Long>> single =  new ArrayList<Pair<String, Long>>();
-						
+
 						if(!rep.isDirectory()){
 							singleFile.add(new File(args[5]));
 							single.add(new Pair<String, Long>(singleFile.get(0).getName(), singleFile.get(0).lastModified()));
 						}
 						File notUser = null;
-						
+
 						if(!owner)
 							notUser = getCorrectRep(args[5]);
-						
+
 						List<Pair<String, Long>> files = !rep.isDirectory()? single : !owner ? 
 								getFiles(getFilesDir(notUser)): getFiles(getFilesDir(rep));
-						
-						Push psh =  new Push(rep.isDirectory()? rep.toString() : rep.getParent(), 
-								rep.isDirectory(), files);
-						res = ClientStub.Instance.sendReceivePush(psh, out, in, !rep.isDirectory()? singleFile 
-								: !owner? getFilesDir(notUser) : getFilesDir(rep), args[0]);
-						
-						break;
+
+								Push psh =  new Push(rep.isDirectory()? rep.toString() : rep.getParent(), 
+										rep.isDirectory(), files);
+								res = ClientStub.Instance.sendReceivePush(psh, out, in, !rep.isDirectory()? singleFile 
+										: !owner? getFilesDir(notUser) : getFilesDir(rep), args[0]);
+
+								break;
 					case "-pull":
 						Pull pll;
+
 						if(owner){
 							pll = new Pull(args[0]+ "/" +args[5], args[5],  !new File(args[5]).isDirectory());
+							out.writeObject(pll);
+							res = ClientStub.Instance.sendReceivePull(pll, out, in);
 						}
 						else{
-							String[] s = args[5].split("/");
-							File f = new File(s[0]);
-							f.mkdir();
-							new File(s[0] + "\\" + s[1]).mkdir();
+
 							pll = new Pull(args[5], args[5], !new File(args[5]).isDirectory());
+							out.writeObject(pll);
+							if(in.readBoolean()){
+								String[] s = args[5].split("/");
+								File f = new File(s[0]);
+								f.mkdir();
+								new File(s[0] + "\\" + s[1]).mkdir();
+								pll.setIsFile(!new File(args[5]).isDirectory());
+								res = ClientStub.Instance.sendReceivePull(pll, out, in);
+							}
+							else
+								res = new Result("sem permissao", false);
 						}
-						res = ClientStub.Instance.sendReceivePull(pll, out, in);
+						
 						break;
 					case "-share":
 						Share shr = new Share(args[6], args[0], args[5]);
@@ -104,7 +115,7 @@ public class myGit {
 						break;
 					}
 				}
-				
+
 				System.out.println(res);
 
 				out.close();
@@ -122,22 +133,22 @@ public class myGit {
 	private File getCorrectRep(String string) {
 		StringBuilder sb = new StringBuilder();
 		String[] split = string.split("/");
-		
+
 		for(int i = 1; i < split.length; i++){
 			sb.append(split[i] + "\\");
 		}
-		
+
 		sb.deleteCharAt(sb.length()-1);
-		
+
 		return new File(sb.toString());
 	}
 
 	private List<Pair<String, Long>> getFiles(List<File> files){
 		List<Pair<String, Long>> result = new ArrayList<Pair<String, Long>>();
-		
+
 		for(File fl : files)
 			result.add(new Pair<String, Long>(fl.getName(), fl.lastModified()));
-		
+
 		return result;
 	}
 

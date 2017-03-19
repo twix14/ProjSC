@@ -10,9 +10,9 @@ public enum ClientStub {
 	//Envia os dados de um push para um repositorio para o servidor
 	public Result sendReceivePush(Push psh, ObjectOutputStream out, ObjectInputStream in, List<File> files, String user) throws IOException, ClassNotFoundException {
 		out.writeObject(psh);
-		if(!in.readBoolean())
+		/*if(!in.readBoolean())
 			return (Result) in.readObject();
-
+		 */
 		int i = 0;
 		List<Pair<String, Long>> fls = psh.getFiles();
 
@@ -29,10 +29,6 @@ public enum ClientStub {
 
 	//Envia os dados de um pull de um repositorio para o servidor
 	public Result sendReceivePull(Pull pll, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException {
-		out.writeObject(pll);
-		if(!in.readBoolean())
-			return new Result("Erro, o utilizador nao tem permissao", false);
-
 		Pull pll2 = (Pull) in.readObject();
 
 		Result res = new Result("", true);
@@ -80,7 +76,7 @@ public enum ClientStub {
 			String[] s = pll2.getLocRep().split("/");
 			StringBuilder sb1 = new StringBuilder();
 			for(int i = 0; i < s.length-1; i++)
-				 sb1.append(s[i]+ "/");
+				sb1.append(s[i]+ "/");
 			String r = sb1.toString();
 			if(!FileUtilities.INSTANCE.checkFile(in, out)){ //se o ficheiro nao estiver atualizado
 				FileUtilities.INSTANCE.downloadFile(in, out,r + " " + extension[0] + " " +  extension[1], false);
@@ -91,7 +87,7 @@ public enum ClientStub {
 		return res;
 	}
 
-	
+
 	// Envia os dados de um remove de permissoes de um repositorio partilhado para o servidor
 	public Result sendReceiveRemove(Remove rm, ObjectOutputStream out, ObjectInputStream in) throws IOException, ClassNotFoundException{
 		out.writeObject(rm);

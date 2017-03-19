@@ -19,6 +19,9 @@ public class Pull implements Serializable{
 		return files;
 	}
 	
+	public void setIsFile(boolean isFile){
+		this.isFile = isFile;
+	}
 	public boolean isFile(){
 		return isFile;
 	}
